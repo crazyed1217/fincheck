@@ -1,0 +1,3647 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>財務體檢 — 你的財務健康，幾分？</title>
+  <meta name="description" content="只需 5 分鐘，完成你的個人財務健康體檢，了解收支、資產、負債與年度目標達成狀況，專業分析一次掌握。" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;600;700;900&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+  <style>
+    /* ===== RESET & BASE ===== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --primary: #1a3a5c;
+      --primary-light: #234d7a;
+      --primary-dark: #0f2236;
+      --accent: #f5a623;
+      --accent-dark: #d4891a;
+      --green: #27ae60;
+      --yellow: #f1c40f;
+      --red: #e74c3c;
+      --white: #ffffff;
+      --gray-50: #f8fafc;
+      --gray-100: #f1f5f9;
+      --gray-200: #e2e8f0;
+      --gray-400: #94a3b8;
+      --gray-600: #475569;
+      --gray-800: #1e293b;
+      --shadow-sm: 0 2px 8px rgba(0,0,0,0.08);
+      --shadow-md: 0 4px 20px rgba(0,0,0,0.12);
+      --shadow-lg: 0 8px 40px rgba(0,0,0,0.18);
+      --radius: 14px;
+      --radius-sm: 8px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Noto Sans TC', system-ui, sans-serif;
+      background: var(--gray-50);
+      color: var(--gray-800);
+      line-height: 1.7;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ===== UTILITIES ===== */
+    .hidden { display: none !important; }
+    .container { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+    .section-label {
+      display: inline-block;
+      background: rgba(245,166,35,0.15);
+      color: var(--accent-dark);
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 5px 14px;
+      border-radius: 20px;
+      margin-bottom: 14px;
+    }
+    .section-title {
+      font-size: clamp(1.6rem, 3vw, 2.4rem);
+      font-weight: 800;
+      color: var(--primary);
+      line-height: 1.3;
+      margin-bottom: 16px;
+    }
+    .section-sub {
+      font-size: 1.05rem;
+      color: var(--gray-600);
+      max-width: 580px;
+      margin: 0 auto;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 30px;
+      border-radius: 50px;
+      font-size: 1rem;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      border: none;
+      transition: all 0.25s ease;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+      color: var(--white);
+      box-shadow: 0 4px 18px rgba(245,166,35,0.45);
+    }
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 28px rgba(245,166,35,0.55);
+    }
+    .btn-outline {
+      background: rgba(255,255,255,0.1);
+      color: var(--white);
+      border: 2px solid rgba(255,255,255,0.5);
+      backdrop-filter: blur(6px);
+    }
+    .btn-outline:hover {
+      background: rgba(255,255,255,0.2);
+      border-color: var(--white);
+      transform: translateY(-2px);
+    }
+    .btn-dark {
+      background: var(--primary);
+      color: var(--white);
+      box-shadow: var(--shadow-md);
+    }
+    .btn-dark:hover {
+      background: var(--primary-light);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    /* ===== MODE SELECTION ===== */
+    .mode-select-screen {
+      position: fixed; inset: 0;
+      background: linear-gradient(135deg, #0e2340 0%, #1a3a5c 100%);
+      z-index: 9999;
+      display: flex; align-items: center; justify-content: center;
+      padding: 24px;
+    }
+    .mode-select-screen.hidden { display: none; }
+    .mode-select-box {
+      background: white; border-radius: 24px;
+      padding: 48px 40px; max-width: 600px; width: 100%;
+      text-align: center; box-shadow: 0 24px 80px rgba(0,0,0,.3);
+    }
+    .mode-select-logo { font-size: 18px; font-weight: 800; color: var(--primary); margin-bottom: 28px; }
+    .mode-select-title { font-size: 26px; font-weight: 900; color: var(--primary); margin-bottom: 8px; }
+    .mode-select-sub { font-size: 14px; color: var(--gray-600); margin-bottom: 32px; }
+    .mode-select-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .mode-card {
+      border: 2px solid var(--gray-200); border-radius: 16px;
+      padding: 28px 20px; background: white; cursor: pointer;
+      transition: all .2s; text-align: center;
+      font-family: 'Noto Sans TC', sans-serif;
+    }
+    .mode-card:hover { border-color: var(--primary); background: #f0f4f8; transform: translateY(-3px); box-shadow: 0 8px 24px rgba(26,58,92,.15); }
+    .mode-card-icon { font-size: 40px; margin-bottom: 14px; }
+    .mode-card-title { font-size: 17px; font-weight: 800; color: var(--primary); margin-bottom: 8px; }
+    .mode-card-desc { font-size: 12px; color: var(--gray-600); line-height: 1.6; }
+    .mode-switch-btn {
+      background: rgba(255,255,255,.15); color: white;
+      border: 1px solid rgba(255,255,255,.3);
+      padding: 7px 16px; border-radius: 20px;
+      font-family: 'Noto Sans TC', sans-serif; font-size: 12px; font-weight: 700;
+      cursor: pointer; transition: all .2s;
+    }
+    .mode-switch-btn:hover { background: rgba(255,255,255,.28); }
+    .mode-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(245,166,35,.2); border: 1px solid rgba(245,166,35,.4);
+      color: var(--accent); padding: 3px 10px; border-radius: 20px;
+      font-size: 11px; font-weight: 700;
+    }
+    @media (max-width: 520px) {
+      .mode-select-cards { grid-template-columns: 1fr; }
+      .mode-select-box { padding: 32px 24px; }
+    }
+
+    /* EMAIL FORM */
+    .email-form-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(10, 20, 35, 0.75);
+      backdrop-filter: blur(8px);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .email-form-overlay.active { display: flex; }
+    .email-modal {
+      background: var(--white);
+      border-radius: 20px;
+      padding: 44px 40px;
+      max-width: 480px;
+      width: 100%;
+      box-shadow: 0 30px 80px rgba(0,0,0,0.3);
+      position: relative;
+      animation: slideUp 0.35s ease;
+    }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(30px) scale(0.96); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .modal-close {
+      position: absolute;
+      top: 16px; right: 18px;
+      background: none; border: none;
+      font-size: 1.4rem;
+      cursor: pointer;
+      color: var(--gray-400);
+      transition: color 0.2s;
+    }
+    .modal-close:hover { color: var(--gray-800); }
+    .modal-icon { font-size: 2.5rem; margin-bottom: 16px; }
+    .modal-title { font-size: 1.5rem; font-weight: 800; color: var(--primary); margin-bottom: 8px; }
+    .modal-sub { font-size: 0.9rem; color: var(--gray-600); margin-bottom: 28px; }
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-size: 0.85rem; font-weight: 600; color: var(--gray-600); margin-bottom: 6px; }
+    .form-group input {
+      width: 100%;
+      padding: 13px 16px;
+      border: 2px solid var(--gray-200);
+      border-radius: var(--radius-sm);
+      font-family: inherit;
+      font-size: 0.95rem;
+      color: var(--gray-800);
+      transition: border-color 0.2s;
+      outline: none;
+    }
+    .form-group input:focus { border-color: var(--primary); }
+    .form-submit {
+      width: 100%;
+      padding: 15px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+      color: var(--white);
+      border: none;
+      border-radius: 50px;
+      font-family: inherit;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.25s;
+      box-shadow: 0 4px 18px rgba(245,166,35,0.4);
+    }
+    .form-submit:hover { transform: translateY(-2px); box-shadow: 0 8px 26px rgba(245,166,35,0.5); }
+    .form-note { font-size: 0.78rem; color: var(--gray-400); text-align: center; margin-top: 12px; }
+
+    /* FAQ */
+    .faq {
+      padding: 100px 0;
+      background: var(--gray-50);
+    }
+    .faq-header { text-align: center; margin-bottom: 56px; }
+    .faq-list { max-width: 720px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+    .faq-item {
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius);
+      overflow: hidden;
+      transition: box-shadow 0.2s;
+    }
+    .faq-item.open { box-shadow: var(--shadow-sm); border-color: rgba(26,58,92,0.2); }
+    .faq-q {
+      width: 100%;
+      background: none;
+      border: none;
+      padding: 22px 24px;
+      text-align: left;
+      font-family: inherit;
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--primary);
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+    }
+    .faq-q-icon {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      background: var(--gray-100);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      transition: all 0.3s;
+      font-size: 1rem;
+      color: var(--primary);
+    }
+    .faq-item.open .faq-q-icon { background: var(--primary); color: var(--white); transform: rotate(45deg); }
+    .faq-a {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.4s ease, padding 0.3s ease;
+    }
+    .faq-a-inner { padding: 0 24px 22px; font-size: 0.95rem; color: var(--gray-600); line-height: 1.75; }
+
+    /* FOOTER */
+    .footer {
+      background: var(--primary-dark);
+      color: rgba(255,255,255,0.6);
+      padding: 60px 0 32px;
+    }
+    .footer-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr;
+      gap: 48px;
+      margin-bottom: 48px;
+    }
+    .footer-brand h3 { color: var(--white); font-size: 1.2rem; font-weight: 800; margin-bottom: 12px; }
+    .footer-brand p { font-size: 0.88rem; line-height: 1.75; }
+    .footer-col h4 { color: var(--white); font-size: 0.9rem; font-weight: 700; margin-bottom: 16px; }
+    .footer-col ul { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+    .footer-col ul li { font-size: 0.85rem; }
+    .footer-col ul li a { color: rgba(255,255,255,0.55); text-decoration: none; transition: color 0.2s; }
+    .footer-col ul li a:hover { color: var(--accent); }
+    .footer-divider { border: none; border-top: 1px solid rgba(255,255,255,0.1); margin-bottom: 24px; }
+    .footer-bottom {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.82rem;
+    }
+    .footer-bottom a { color: var(--accent); text-decoration: none; }
+
+    /* ===== APP SHELL ===== */
+    #app-shell { min-height: 100vh; background: #f0f4f8; }
+
+    .app-header {
+      background: var(--white);
+      border-bottom: 1px solid var(--gray-200);
+      padding: 16px 0;
+      position: sticky;
+      top: 0;
+      z-index: 150;
+      box-shadow: var(--shadow-sm);
+    }
+    .app-header-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .app-logo { font-size: 1.15rem; font-weight: 900; color: var(--primary); display: flex; align-items: center; gap: 8px; }
+    .app-logo-icon {
+      width: 34px; height: 34px;
+      background: linear-gradient(135deg, var(--primary), var(--primary-light));
+      border-radius: 9px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem;
+    }
+    .app-logo span { color: var(--accent); }
+    .app-exit-btn {
+      font-size: 0.85rem;
+      color: var(--gray-400);
+      background: none;
+      border: 1px solid var(--gray-200);
+      border-radius: 20px;
+      padding: 6px 14px;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .app-exit-btn:hover { color: var(--primary); border-color: var(--primary); }
+
+    /* TABS */
+    .tabs-nav {
+      background: var(--white);
+      border-bottom: 1px solid var(--gray-200);
+      padding: 0;
+      overflow-x: auto;
+      position: sticky;
+      top: calc(48px + 69px);
+      z-index: 140;
+    }
+    .tabs-nav-inner {
+      display: flex;
+      gap: 0;
+      min-width: max-content;
+    }
+    .tab-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 16px 24px;
+      background: none;
+      border: none;
+      border-bottom: 3px solid transparent;
+      font-family: inherit;
+      font-size: 0.92rem;
+      font-weight: 600;
+      color: var(--gray-600);
+      cursor: pointer;
+      transition: all 0.25s;
+      white-space: nowrap;
+    }
+    .tab-btn:hover { color: var(--primary); background: var(--gray-50); }
+    .tab-btn.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+      background: rgba(26,58,92,0.04);
+    }
+    .tab-btn-icon { font-size: 1.1rem; }
+
+    .tab-content { animation: fadeIn 0.35s ease; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .tab-panel { display: none; padding: 36px 0 60px; }
+    .tab-panel.active { display: block; }
+
+    .tab-usage-bar {
+      background: linear-gradient(135deg, rgba(26,58,92,0.06), rgba(26,58,92,0.04));
+      border: 1px solid rgba(26,58,92,0.1);
+      border-radius: var(--radius-sm);
+      padding: 13px 18px;
+      margin-bottom: 28px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.88rem;
+      color: var(--primary);
+    }
+    .tab-usage-icon { font-size: 1.1rem; flex-shrink: 0; }
+
+    .placeholder-card {
+      background: var(--white);
+      border: 2px dashed var(--gray-200);
+      border-radius: var(--radius);
+      padding: 72px 40px;
+      text-align: center;
+    }
+    .placeholder-icon { font-size: 3.5rem; margin-bottom: 20px; opacity: 0.4; }
+    .placeholder-title { font-size: 1.3rem; font-weight: 700; color: var(--gray-600); margin-bottom: 10px; }
+    .placeholder-sub { font-size: 0.92rem; color: var(--gray-400); max-width: 360px; margin: 0 auto 28px; }
+    .placeholder-badge {
+      display: inline-block;
+      background: var(--gray-100);
+      color: var(--gray-400);
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 6px 16px;
+      border-radius: 20px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 768px) {
+      .hero-grid { grid-template-columns: 1fr; gap: 40px; }
+      .hero-visual { display: none; }
+      .footer-grid { grid-template-columns: 1fr; gap: 32px; }
+      .mock-kpi-row { grid-template-columns: repeat(2, 1fr); }
+      .mock-chart-row { grid-template-columns: 1fr; }
+      .pricing-card { padding: 36px 28px; }
+      .email-modal { padding: 36px 24px; }
+      .nav-actions .btn-outline { display: none; }
+      .tab-btn { padding: 14px 16px; font-size: 0.82rem; }
+      .hero-stats { flex-wrap: wrap; gap: 20px; }
+      .footer-bottom { flex-direction: column; gap: 8px; text-align: center; }
+    }
+
+    @media (max-width: 480px) {
+      .hero-title { font-size: 2rem; }
+      .hero-actions { flex-direction: column; }
+      .hero-actions .btn { width: 100%; justify-content: center; }
+    }
+
+    /* Pulse animation for CTA */
+    @keyframes pulse-ring {
+      0% { box-shadow: 0 4px 18px rgba(245,166,35,0.45); }
+      50% { box-shadow: 0 4px 28px rgba(245,166,35,0.75), 0 0 0 8px rgba(245,166,35,0.1); }
+      100% { box-shadow: 0 4px 18px rgba(245,166,35,0.45); }
+    }
+    .btn-primary.pulse { animation: pulse-ring 2.5s infinite; }
+
+    /* ===== TAB 1 & 2 STYLES ===== */
+
+    /* Year / Month selector */
+    .tab-controls {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    .tab-controls-left { display: flex; align-items: center; gap: 10px; }
+    .tab-controls-right { display: flex; gap: 8px; }
+    .year-select, .month-btn {
+      font-family: inherit;
+      font-size: 0.88rem;
+      font-weight: 600;
+      border-radius: 8px;
+      border: 2px solid var(--gray-200);
+      background: var(--white);
+      color: var(--primary);
+      padding: 8px 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+      outline: none;
+    }
+    .year-select:focus, .month-btn:hover { border-color: var(--primary); }
+    .month-pills { display: flex; gap: 4px; flex-wrap: wrap; }
+    .month-pill {
+      font-family: inherit;
+      font-size: 0.78rem;
+      font-weight: 700;
+      padding: 6px 12px;
+      border-radius: 20px;
+      border: 2px solid var(--gray-200);
+      background: var(--white);
+      color: var(--gray-600);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .month-pill:hover { border-color: var(--primary); color: var(--primary); }
+    .month-pill.active { background: var(--primary); color: var(--white); border-color: var(--primary); }
+
+    /* Two-column layout for Tab 1 */
+    .tab-two-col {
+      display: grid;
+      grid-template-columns: 1fr 360px;
+      gap: 24px;
+      align-items: start;
+    }
+    @media (max-width: 900px) {
+      .tab-two-col { grid-template-columns: 1fr; }
+    }
+
+    /* Cards */
+    .app-card {
+      background: var(--white);
+      border-radius: var(--radius);
+      border: 1px solid var(--gray-200);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+    .app-card-header {
+      padding: 18px 22px 14px;
+      border-bottom: 1px solid var(--gray-100);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .app-card-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .app-card-body { padding: 20px 22px; }
+
+    /* Expense Form */
+    .expense-form {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .expense-form .full-width { grid-column: 1 / -1; }
+    .ef-group { display: flex; flex-direction: column; gap: 5px; }
+    .ef-label {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--gray-600);
+    }
+    .ef-input, .ef-select {
+      font-family: inherit;
+      font-size: 0.88rem;
+      padding: 9px 12px;
+      border: 2px solid var(--gray-200);
+      border-radius: var(--radius-sm);
+      color: var(--gray-800);
+      background: #fffef5;
+      outline: none;
+      transition: border-color 0.2s;
+      width: 100%;
+    }
+    .ef-input:focus, .ef-select:focus { border-color: var(--primary); background: #fff; }
+    .ef-input::placeholder { color: var(--gray-400); }
+
+    /* Toggle switch */
+    .toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .toggle-label-text { font-size: 0.87rem; color: var(--gray-600); font-weight: 600; }
+    .toggle-switch {
+      position: relative;
+      width: 44px; height: 24px;
+      flex-shrink: 0;
+    }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider {
+      position: absolute;
+      inset: 0;
+      background: var(--gray-200);
+      border-radius: 24px;
+      cursor: pointer;
+      transition: background 0.25s;
+    }
+    .toggle-slider::before {
+      content: '';
+      position: absolute;
+      width: 18px; height: 18px;
+      left: 3px; top: 3px;
+      background: var(--white);
+      border-radius: 50%;
+      transition: transform 0.25s;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+    }
+    .toggle-switch input:checked + .toggle-slider { background: var(--accent); }
+    .toggle-switch input:checked + .toggle-slider::before { transform: translateX(20px); }
+
+    /* Expense table */
+    .expense-table-wrap { overflow-x: auto; }
+    .expense-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+    .expense-table th {
+      text-align: left;
+      padding: 10px 12px;
+      background: var(--gray-50);
+      color: var(--gray-600);
+      font-weight: 700;
+      font-size: 0.76rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      white-space: nowrap;
+    }
+    .expense-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--gray-100);
+      vertical-align: middle;
+      white-space: nowrap;
+    }
+    .expense-table tr:last-child td { border-bottom: none; }
+    .expense-table tr:hover td { background: var(--gray-50); }
+    .cat-badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-size: 0.73rem;
+      font-weight: 700;
+    }
+    .fixed-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 0.7rem;
+      font-weight: 700;
+    }
+    .fixed-badge.yes { background: rgba(245,166,35,0.15); color: var(--accent-dark); }
+    .fixed-badge.no { background: var(--gray-100); color: var(--gray-400); }
+    .del-btn {
+      background: none;
+      border: none;
+      color: var(--gray-400);
+      cursor: pointer;
+      font-size: 1rem;
+      padding: 4px 8px;
+      border-radius: 6px;
+      transition: all 0.2s;
+    }
+    .del-btn:hover { color: var(--red); background: rgba(231,76,60,0.08); }
+    .edit-btn {
+      background: none;
+      border: none;
+      color: var(--gray-400);
+      cursor: pointer;
+      font-size: 1rem;
+      padding: 4px 8px;
+      border-radius: 6px;
+      transition: all 0.2s;
+    }
+    .edit-btn:hover { color: var(--primary); background: rgba(26,58,92,0.08); }
+    .action-btns { display: flex; gap: 2px; justify-content: flex-end; }
+
+    /* 編輯 Modal */
+    .edit-modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.5);
+      backdrop-filter: blur(4px);
+      z-index: 2000;
+      display: flex; align-items: center; justify-content: center;
+      padding: 20px;
+      opacity: 0; pointer-events: none;
+      transition: opacity .25s;
+    }
+    .edit-modal-overlay.active { opacity: 1; pointer-events: all; }
+    .edit-modal {
+      background: var(--white);
+      border-radius: 20px;
+      padding: 32px;
+      width: 100%; max-width: 480px;
+      box-shadow: 0 24px 80px rgba(0,0,0,.2);
+      transform: translateY(12px);
+      transition: transform .25s;
+    }
+    .edit-modal-overlay.active .edit-modal { transform: translateY(0); }
+    .edit-modal-title { font-size: 18px; font-weight: 800; color: var(--primary); margin-bottom: 22px; display: flex; align-items: center; gap: 8px; }
+    .edit-modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .edit-modal-grid .full { grid-column: 1 / -1; }
+    .edit-field-label { font-size: 12px; font-weight: 700; color: var(--gray-600); margin-bottom: 5px; }
+    .edit-field-input {
+      width: 100%; padding: 10px 12px;
+      border: 1.5px solid var(--gray-200); border-radius: 8px;
+      font-family: 'Noto Sans TC', sans-serif; font-size: 14px;
+      background: #fffde7; outline: none; transition: border-color .2s;
+    }
+    .edit-field-input:focus { border-color: var(--primary); }
+    .edit-field-input.auto-bg { background: var(--gray-50); }
+    .edit-modal-footer { display: flex; gap: 10px; margin-top: 22px; }
+    .edit-modal-footer .btn-save   { flex:1; background: var(--primary); color:#fff; border:none; padding:12px; border-radius:10px; font-family:'Noto Sans TC',sans-serif; font-weight:700; font-size:14px; cursor:pointer; transition:background .2s; }
+    .edit-modal-footer .btn-save:hover { background: var(--primary-light); }
+    .edit-modal-footer .btn-cancel { background: var(--gray-100); color: var(--gray-600); border:none; padding:12px 20px; border-radius:10px; font-family:'Noto Sans TC',sans-serif; font-weight:700; font-size:14px; cursor:pointer; transition:background .2s; }
+    .edit-modal-footer .btn-cancel:hover { background: var(--gray-200); }
+    .empty-state {
+      text-align: center;
+      padding: 32px;
+      color: var(--gray-400);
+      font-size: 0.9rem;
+    }
+    .empty-state-icon { font-size: 2rem; margin-bottom: 8px; opacity: 0.5; }
+
+    /* KPI tiles */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .kpi-tile {
+      background: var(--gray-50);
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-sm);
+      padding: 14px 16px;
+    }
+    .kpi-tile-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--gray-400);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 4px;
+    }
+    .kpi-tile-val {
+      font-size: 1.25rem;
+      font-weight: 900;
+      background: var(--gray-100);
+      border-radius: 6px;
+      padding: 2px 8px;
+      display: inline-block;
+    }
+    .kpi-tile-val.income-val { background: rgba(39,174,96,0.1); color: var(--green); }
+    .kpi-tile-val.expense-val { background: rgba(231,76,60,0.1); color: var(--red); }
+    .kpi-tile-val.balance-val.pos { background: rgba(39,174,96,0.1); color: var(--green); }
+    .kpi-tile-val.balance-val.neg { background: rgba(231,76,60,0.1); color: var(--red); }
+    .kpi-tile-val.rate-val { background: rgba(26,58,92,0.08); color: var(--primary); }
+    .chart-wrap { position: relative; height: 200px; }
+
+    /* ---- TAB 2: Income ---- */
+    .income-table-wrap { overflow-x: auto; }
+    .income-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.84rem;
+      min-width: 700px;
+    }
+    .income-table th {
+      padding: 10px 12px;
+      background: var(--primary);
+      color: rgba(255,255,255,0.85);
+      font-weight: 700;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      text-align: right;
+      white-space: nowrap;
+    }
+    .income-table th:first-child { text-align: left; }
+    .income-table td {
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--gray-100);
+      text-align: right;
+      vertical-align: middle;
+    }
+    .income-table td:first-child { text-align: left; font-weight: 600; color: var(--primary); white-space: nowrap; }
+    .income-table tr:hover td { background: rgba(26,58,92,0.03); }
+    .income-table .total-row td {
+      background: rgba(26,58,92,0.06);
+      font-weight: 700;
+      color: var(--primary);
+      border-top: 2px solid var(--primary);
+    }
+    .income-table .annual-summary td {
+      background: rgba(245,166,35,0.07);
+      font-weight: 700;
+      color: var(--accent-dark);
+    }
+    .income-input {
+      width: 100%;
+      min-width: 90px;
+      padding: 6px 10px;
+      border: 2px solid transparent;
+      border-radius: 6px;
+      font-family: inherit;
+      font-size: 0.84rem;
+      text-align: right;
+      background: #fffef5;
+      color: var(--gray-800);
+      outline: none;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .income-input:focus { border-color: var(--primary); background: var(--white); }
+    .income-input:hover { border-color: var(--gray-300); }
+    .auto-cell {
+      background: var(--gray-50);
+      color: var(--gray-600);
+      font-weight: 700;
+      padding: 6px 10px;
+      border-radius: 6px;
+      display: inline-block;
+      min-width: 80px;
+      text-align: right;
+    }
+    .chart-two-col {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 20px;
+    }
+    @media (max-width: 800px) {
+      .chart-two-col { grid-template-columns: 1fr; }
+    }
+    .chart-wrap-tall { position: relative; height: 240px; }
+
+    /* ===== TAB 6 — 現金流預測 ===== */
+    .tab-btn-cashflow { background: linear-gradient(135deg,rgba(245,166,35,.15),rgba(231,76,60,.1)); }
+    .tab-btn-cashflow.active { background: linear-gradient(135deg,var(--accent),#e8621a); color:white; }
+
+    .cf-warning-banner {
+      border-radius: var(--radius); padding: 16px 22px; margin-bottom: 22px;
+      font-weight: 700; font-size: 0.97rem; display: flex; align-items: center; gap: 12px;
+      line-height: 1.5;
+    }
+    .cf-warning-banner.green { background: #d4edda; color: #155724; border: 1.5px solid #b7dfc4; animation: none; }
+    .cf-warning-banner.yellow { background: #fff3cd; color: #7d5a00; border: 1.5px solid #ffd56b; animation: cfPulse 2.5s ease-in-out infinite; }
+    .cf-warning-banner.red { background: #fde8ea; color: #7b1d1d; border: 1.5px solid #f5b8bc; animation: cfPulse 1.8s ease-in-out infinite; }
+    @keyframes cfPulse { 0%,100%{opacity:1} 50%{opacity:.72} }
+
+    .cf-summary-grid {
+      display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; margin-bottom: 24px;
+    }
+    @media (max-width: 860px) { .cf-summary-grid { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 480px) { .cf-summary-grid { grid-template-columns: 1fr; } }
+
+    .cf-summary-card {
+      background: white; border-radius: var(--radius); padding: 20px 18px;
+      box-shadow: var(--shadow-sm); text-align: center;
+      border-top: 4px solid var(--primary); transition: border-color .3s;
+    }
+    .cf-summary-card.cf-card-green { border-top-color: var(--green); }
+    .cf-summary-card.cf-card-yellow { border-top-color: var(--yellow); }
+    .cf-summary-card.cf-card-red { border-top-color: var(--red); animation: cfPulse 1.8s ease-in-out infinite; }
+    .cf-label { font-size: 0.75rem; color: var(--gray-600); font-weight: 700; margin-bottom: 8px; text-transform: uppercase; letter-spacing: .06em; }
+    .cf-value { font-size: 1.45rem; font-weight: 900; color: var(--primary); margin-bottom: 5px; }
+    .cf-value.cf-neg { color: var(--red); }
+    .cf-value.cf-pos { color: var(--green); }
+    .cf-sub { font-size: 0.7rem; color: var(--gray-400); line-height: 1.4; }
+
+    .cf-legend { display: flex; align-items: center; gap: 8px; font-size: 0.77rem; color: var(--gray-600); flex-wrap: wrap; }
+    .cf-legend-dot { width: 10px; height: 10px; border-radius: 2px; display: inline-block; flex-shrink:0; }
+    .cf-legend-dot.income { background: rgba(39,174,96,.85); }
+    .cf-legend-dot.expense { background: rgba(231,76,60,.85); }
+    .cf-legend-line { width: 18px; height: 3px; background: #f5a623; border-radius: 2px; display: inline-block; flex-shrink:0; }
+
+    .cf-two-col { display: grid; grid-template-columns: 3fr 2fr; gap: 20px; margin-bottom: 20px; }
+    @media (max-width: 960px) { .cf-two-col { grid-template-columns: 1fr; } }
+
+    .cf-table { width: 100%; border-collapse: collapse; font-size: 0.84rem; }
+    .cf-table th { background: var(--gray-100); padding: 10px 12px; text-align: right; font-weight: 700; color: var(--gray-600); font-size: 0.77rem; white-space: nowrap; }
+    .cf-table th:first-child { text-align: left; }
+    .cf-table td { padding: 9px 12px; border-bottom: 1px solid var(--gray-100); text-align: right; white-space: nowrap; }
+    .cf-table td:first-child { text-align: left; font-weight: 600; }
+    .cf-table tr.cf-row-danger td { background: #fff5f5; }
+    .cf-table tr.cf-row-warn td { background: #fffbeb; }
+    .cf-table tr:last-child td { border-bottom: none; }
+    .cf-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 4px; vertical-align: middle; }
+    .cf-dot.green { background: var(--green); }
+    .cf-dot.yellow { background: #e6a817; }
+    .cf-dot.red { background: var(--red); }
+
+    .cf-solution-item {
+      background: var(--gray-50); border-radius: 10px; padding: 14px 16px; margin-bottom: 12px;
+      border-left: 4px solid var(--primary); font-size: 0.88rem; line-height: 1.7;
+    }
+    .cf-solution-item:last-child { margin-bottom: 0; }
+    .cf-solution-item.urgent { border-left-color: var(--red); background: #fff5f5; }
+    .cf-solution-item.warning { border-left-color: #e6a817; background: #fffbeb; }
+    .cf-solution-item.safe { border-left-color: var(--green); background: #f0fff4; }
+    .cf-sol-title { font-weight: 800; color: var(--primary); margin-bottom: 5px; font-size: 0.93rem; }
+    .cf-solution-item.urgent .cf-sol-title { color: #c0392b; }
+    .cf-solution-item.warning .cf-sol-title { color: #7d5a00; }
+    .cf-solution-item.safe .cf-sol-title { color: #196f3d; }
+    .cf-solution-item p { color: var(--gray-600); font-size: 0.84rem; margin: 0; }
+
+    .cf-assumptions {
+      background: linear-gradient(135deg,#f8fafc,#eef2ff); border: 1px solid var(--gray-200);
+      border-radius: var(--radius); padding: 16px 20px; margin-bottom: 32px;
+      font-size: 0.85rem; color: var(--gray-600); line-height: 1.7;
+    }
+    .cf-assumptions-title { font-weight: 700; color: var(--primary); margin-bottom: 6px; }
+    .cf-no-data { text-align: center; padding: 40px 24px; color: var(--gray-400); font-size: 0.95rem; }
+  </style>
+</head>
+<body>
+
+
+
+<!-- =========================================
+     MODE SELECTION SCREEN
+     ========================================= -->
+<div id="mode-select-screen" class="mode-select-screen">
+  <div class="mode-select-box">
+    <div class="mode-select-logo">💰 個人財務體檢套組</div>
+    <h2 class="mode-select-title">請選擇體檢模式</h2>
+    <p class="mode-select-sub">兩種模式資料完全獨立，可隨時從頂部切換</p>
+    <div class="mode-select-cards">
+      <button class="mode-card" onclick="selectMode('personal')">
+        <div class="mode-card-icon">👤</div>
+        <div class="mode-card-title">個人財務體檢</div>
+        <div class="mode-card-desc">薪資收入、個人支出、個人資產負債、儲蓄率、緊急預備金等指標</div>
+      </button>
+      <button class="mode-card" onclick="selectMode('company')">
+        <div class="mode-card-icon">🏢</div>
+        <div class="mode-card-title">公司財務體檢</div>
+        <div class="mode-card-desc">營業收入、公司支出、企業資產負債、毛利率、流動比率等指標</div>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- =========================================
+     APP SHELL
+     ========================================= -->
+<div id="app-shell">
+
+  <!-- APP HEADER -->
+  <header class="app-header">
+    <div class="container">
+      <div class="app-header-inner">
+        <div class="app-logo">
+          <div class="app-logo-icon" id="mode-logo-icon">💰</div>
+          <span id="mode-title-label">個人財務體檢</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <button class="mode-switch-btn" id="mode-switch-btn" onclick="switchMode()">
+            🔄 切換模式
+          </button>
+          <div class="data-tools">
+            <button class="data-tool-btn export" onclick="exportData()">📤 匯出</button>
+            <button class="data-tool-btn import" onclick="document.getElementById('import-file-input').click()">📥 匯入</button>
+            <button class="data-tool-btn clear"  onclick="clearAllData()">🗑️ 清除</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+  <input type="file" id="import-file-input" accept=".json" style="display:none" onchange="handleImportFile(event)" />
+
+  <!-- TABS NAVIGATION -->
+  <nav class="tabs-nav">
+    <div class="container">
+      <div class="tabs-nav-inner">
+        <button class="tab-btn active" data-tab="tab-expenses" id="tab-btn-expenses">
+          <span class="tab-btn-icon">📒</span> 收支記錄
+        </button>
+        <button class="tab-btn" data-tab="tab-income" id="tab-btn-income">
+          <span class="tab-btn-icon">📈</span> 收入追蹤
+        </button>
+        <button class="tab-btn" data-tab="tab-balance" id="tab-btn-balance">
+          <span class="tab-btn-icon">🏦</span> 資產負債
+        </button>
+        <button class="tab-btn" data-tab="tab-dashboard" id="tab-btn-dashboard">
+          <span class="tab-btn-icon">🩺</span> 財務儀表板
+        </button>
+        <button class="tab-btn" data-tab="tab-goals" id="tab-btn-goals">
+          <span class="tab-btn-icon">🎯</span> 年度目標
+        </button>
+        <button class="tab-btn tab-btn-cashflow" data-tab="tab-cashflow" id="tab-btn-cashflow">
+          <span class="tab-btn-icon">💸</span> 現金流預測
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- TAB PANELS -->
+  <main>
+    <!-- 收支記錄 -->
+    <div class="tab-panel active tab-content" id="tab-expenses">
+      <div class="container">
+        <div class="tab-usage-bar">
+          <span class="tab-usage-icon">💡</span>
+          <span>選擇月份後輸入支出記錄；右側即時顯示本月統計與圖表，<strong>淡黃色欄位</strong>可直接輸入，<strong>灰色欄位</strong>為自動計算。</span>
+        </div>
+
+        <!-- Year & Month Controls -->
+        <div class="tab-controls">
+          <div class="tab-controls-left">
+            <select class="year-select" id="exp-year-select"></select>
+            <span style="font-size:0.85rem;color:var(--gray-600);">年</span>
+          </div>
+          <div class="month-pills" id="exp-month-pills"></div>
+        </div>
+
+        <div class="tab-two-col">
+          <!-- LEFT: Form + Table -->
+          <div>
+            <!-- Add Expense Form -->
+            <div class="app-card">
+              <div class="app-card-header">
+                <div class="app-card-title">➕ 新增支出記錄</div>
+              </div>
+              <div class="app-card-body">
+                <form class="expense-form" id="expense-form">
+                  <div class="ef-group">
+                    <label class="ef-label">日期</label>
+                    <input class="ef-input" type="date" id="ef-date" required />
+                  </div>
+                  <div class="ef-group">
+                    <label class="ef-label">類別</label>
+                    <select class="ef-select" id="ef-category">
+                      <option value="餐飲">🍜 餐飲</option>
+                      <option value="交通">🚌 交通</option>
+                      <option value="娛樂">🎮 娛樂</option>
+                      <option value="購物">🛍️ 購物</option>
+                      <option value="醫療">🏥 醫療</option>
+                      <option value="保險">🛡️ 保險</option>
+                      <option value="投資">📊 投資</option>
+                      <option value="固定支出">📌 固定支出</option>
+                      <option value="其他">📦 其他</option>
+                    </select>
+                  </div>
+                  <div class="ef-group full-width" style="grid-column:1/-1">
+                    <label class="ef-label">項目名稱</label>
+                    <input class="ef-input" type="text" id="ef-name" placeholder="例：午餐、Ubike 月票…" required />
+                  </div>
+                  <div class="ef-group">
+                    <label class="ef-label">金額（NT$）</label>
+                    <input class="ef-input" type="number" id="ef-amount" placeholder="0" min="0" required />
+                  </div>
+                  <div class="ef-group">
+                    <label class="ef-label">備註</label>
+                    <input class="ef-input" type="text" id="ef-note" placeholder="選填" />
+                  </div>
+                  <div class="ef-group full-width" style="grid-column:1/-1">
+                    <div class="toggle-row">
+                      <span class="toggle-label-text">📌 固定支出（每月固定發生）</span>
+                      <label class="toggle-switch">
+                        <input type="checkbox" id="ef-fixed" />
+                        <span class="toggle-slider"></span>
+                      </label>
+                    </div>
+                  </div>
+                  <div class="full-width" style="grid-column:1/-1;margin-top:4px;">
+                    <button type="submit" class="btn btn-dark" style="width:100%;justify-content:center;padding:12px;border-radius:10px;">
+                      ＋ 新增記錄
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+
+            <!-- Expense Table -->
+            <div class="app-card">
+              <div class="app-card-header">
+                <div class="app-card-title">📋 本月支出明細</div>
+                <span id="exp-record-count" style="font-size:0.8rem;color:var(--gray-400);">0 筆</span>
+              </div>
+              <div class="app-card-body" style="padding:0;">
+                <div class="expense-table-wrap">
+                  <table class="expense-table">
+                    <thead>
+                      <tr>
+                        <th>日期</th>
+                        <th>類別</th>
+                        <th>名稱</th>
+                        <th style="text-align:right">金額</th>
+                        <th style="text-align:center">固定</th>
+                        <th>備註</th>
+                        <th></th>
+                      </tr>
+                    </thead>
+                    <tbody id="expense-tbody"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- RIGHT: Stats + Charts -->
+          <div>
+            <!-- KPI Summary -->
+            <div class="app-card">
+              <div class="app-card-header">
+                <div class="app-card-title">📊 本月摘要</div>
+              </div>
+              <div class="app-card-body">
+                <div class="kpi-grid">
+                  <div class="kpi-tile">
+                    <div class="kpi-tile-label">本月總收入</div>
+                    <div class="kpi-tile-val income-val" id="kpi-income">NT$0</div>
+                  </div>
+                  <div class="kpi-tile">
+                    <div class="kpi-tile-label">本月總支出</div>
+                    <div class="kpi-tile-val expense-val" id="kpi-expense">NT$0</div>
+                  </div>
+                  <div class="kpi-tile">
+                    <div class="kpi-tile-label">本月結餘</div>
+                    <div class="kpi-tile-val balance-val" id="kpi-balance">NT$0</div>
+                  </div>
+                  <div class="kpi-tile">
+                    <div class="kpi-tile-label">本月儲蓄率</div>
+                    <div class="kpi-tile-val rate-val" id="kpi-saverate">—</div>
+                  </div>
+                </div>
+
+                <!-- Category Pie Chart -->
+                <div style="margin-bottom:8px;">
+                  <div style="font-size:0.8rem;font-weight:700;color:var(--gray-600);margin-bottom:10px;">支出類別佔比</div>
+                  <div class="chart-wrap">
+                    <canvas id="chart-exp-pie"></canvas>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Fixed vs Flexible Bar Chart -->
+            <div class="app-card">
+              <div class="app-card-header">
+                <div class="app-card-title">📌 固定 vs 彈性支出</div>
+              </div>
+              <div class="app-card-body">
+                <div class="chart-wrap">
+                  <canvas id="chart-exp-bar"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 收入追蹤 -->
+    <div class="tab-panel tab-content" id="tab-income">
+      <div class="container">
+        <div class="tab-usage-bar">
+          <span class="tab-usage-icon">💡</span>
+          <span>在下方各月欄位輸入每項收入金額，合計與圖表將即時更新。<strong>淡黃色欄位</strong>可直接輸入，<strong>灰色欄位</strong>為自動計算。</span>
+        </div>
+
+        <!-- Year controls -->
+        <div class="tab-controls" style="margin-bottom:16px;">
+          <div class="tab-controls-left">
+            <select class="year-select" id="inc-year-select"></select>
+            <span style="font-size:0.85rem;color:var(--gray-600);">年 收入記錄</span>
+          </div>
+        </div>
+
+        <!-- Income Table -->
+        <div class="app-card">
+          <div class="app-card-header">
+            <div class="app-card-title">📅 全年收入輸入表</div>
+            <span style="font-size:0.78rem;color:var(--gray-400);">點擊儲存格直接輸入金額</span>
+          </div>
+          <div class="app-card-body" style="padding:0 0 4px;">
+            <div class="income-table-wrap">
+              <table class="income-table" id="income-table">
+                <thead>
+                  <tr>
+                    <th>來源 \ 月份</th>
+                    <th>1月</th><th>2月</th><th>3月</th><th>4月</th>
+                    <th>5月</th><th>6月</th><th>7月</th><th>8月</th>
+                    <th>9月</th><th>10月</th><th>11月</th><th>12月</th>
+                    <th style="background:#0a2540;">年合計</th>
+                  </tr>
+                </thead>
+                <tbody id="income-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="chart-two-col">
+          <div class="app-card">
+            <div class="app-card-header">
+              <div class="app-card-title">📈 12 個月收入趨勢</div>
+            </div>
+            <div class="app-card-body">
+              <div class="chart-wrap-tall">
+                <canvas id="chart-income-line"></canvas>
+              </div>
+            </div>
+          </div>
+          <div class="app-card">
+            <div class="app-card-header">
+              <div class="app-card-title">🥧 收入來源佔比</div>
+            </div>
+            <div class="app-card-body">
+              <div class="chart-wrap-tall">
+                <canvas id="chart-income-pie"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Annual Summary KPIs -->
+        <div class="app-card">
+          <div class="app-card-header">
+            <div class="app-card-title">📊 年度收入摘要</div>
+          </div>
+          <div class="app-card-body">
+            <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr);">
+              <div class="kpi-tile">
+                <div class="kpi-tile-label">年度總收入</div>
+                <div class="kpi-tile-val income-val" id="inc-kpi-annual">NT$0</div>
+              </div>
+              <div class="kpi-tile">
+                <div class="kpi-tile-label">月平均收入</div>
+                <div class="kpi-tile-val rate-val" id="inc-kpi-avg">NT$0</div>
+              </div>
+              <div class="kpi-tile">
+                <div class="kpi-tile-label">最高收入月份</div>
+                <div class="kpi-tile-val" id="inc-kpi-best" style="background:rgba(245,166,35,0.12);color:var(--accent-dark);">—</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 資產負債 -->
+    <div class="tab-panel tab-content" id="tab-balance">
+      <div class="container">
+        <div class="tab-usage-bar">
+          <span class="tab-usage-icon">💡</span>
+          <span id="bal-usage-text">輸入你的各項資產（現金、股票、不動產）與負債（貸款、信用卡），計算你的真實淨值。</span>
+        </div>
+        <!-- KPI 摘要列 -->
+        <div class="bal-kpi-grid">
+          <div class="bal-kpi">
+            <div class="bal-kpi-label">💰 總資產</div>
+            <div class="bal-kpi-value positive" id="bal-total-assets">NT$0</div>
+          </div>
+          <div class="bal-kpi">
+            <div class="bal-kpi-label">🏦 總負債</div>
+            <div class="bal-kpi-value warning" id="bal-total-liab">NT$0</div>
+          </div>
+          <div class="bal-kpi">
+            <div class="bal-kpi-label">✨ 淨資產</div>
+            <div class="bal-kpi-value" id="bal-net-worth">NT$0</div>
+          </div>
+          <div class="bal-kpi">
+            <div class="bal-kpi-label">📊 負債比</div>
+            <div class="bal-kpi-value" id="bal-debt-ratio">0%</div>
+          </div>
+        </div>
+
+        <!-- 輸入區 -->
+        <div class="bal-grid">
+          <!-- 資產 -->
+          <div class="bal-card">
+            <div class="bal-card-title">💰 資產</div>
+            <!-- 個人模式 -->
+            <div class="bal-row" data-mode="personal">
+              <span class="bal-row-label">現金及活存</span>
+              <input type="number" class="bal-input" data-section="assets" data-field="cash" data-mode="personal" placeholder="0" min="0" onchange="onBalanceFieldChange(this)" />
+            </div>
+            <div class="bal-row" data-mode="personal">
+              <span class="bal-row-label">定存</span>
+              <input type="number" class="bal-input" data-section="assets" data-field="deposit" data-mode="personal" placeholder="0" min="0" onchange="onBalanceFieldChange(this)" />
+            </div>
+            <div class="bal-row" data-mode="personal">
+              <span class="bal-row-label">股票及基金</span>
+              <input type="number" class="bal-input" data-section="assets" data-field="stocks" data-mode="personal" placeholder="0" min="0" onchange="onBalanceFieldChange(this)" />
+            </div>
+            <div class="bal-row" data-mode="personal">
+              <span class="bal-row-label">房產（市值）</span>
+              <input type="number" class="bal-input" data-section="assets" data-field="property" data-mode="personal" placeholder="0" min="0" onchange="onBalanceFieldChange(this)" />
+            </div>
+            <div class="bal-row" data-mode="personal">
+              <span class="bal-row-label">其他資產</span>
+              <input type="number" class="bal-input" data-section="assets" data-field="other" data-mode="personal" placeholder="0" min="0" onchange="onBalanceFieldChange(this)" />
+            </div>
+            <!-- 公司模式 -->
+            <div class="bal-row" data-mode="company">
+              <span class="bal-row-label">現金及銀行存款</span>
+              <input type="number" class="bal-input" data-section="assets" data-field="cash" data-mode="company" placeholder="0" min="0" onchange="onBalanceFieldChange(this)" />
+            </div>
+            <div class="bal-row" data-mode="company">
+              <span class="bal-row-label">定存/短期投資</span>
+              <input type="number" class="bal-input" data-section="assets" data-field="deposit" data-mode="company" placeholder="0" min="0" onchange="onBalanceFieldChange(this)" />
+            </div>
+            <div class="bal-row" data-mode="company">
+              <span class="bal-row-label">應收帳款</span>
+              <input type="number" class="bal-input" data-section="assets" data-field="receivables" data-mode="company" placeholder="0" min="0" onchange="onBalanceFieldChange(this)" />
+            </div>
+            <div class="bal-row" data-mode="company">
+              <span class="bal-row-label">存貨</span>
+              <input type="number" class="bal-input" data-section="assets" data-field="inventory" data-mode="company" placeholder="0" min="0" onchange="onBalanceFieldChange(this)" />
+            </div>
+            <div class="bal-row" data-mode="company">
+              <span class="bal-row-label">固定資產/設備</span>
+              <input type="number" class="bal-input" data-section="assets" data-field="equipment" data-mode="company" placeholder="0" min="0" onchange="onBalanceFieldChange(this)" />
+            </div>
+            <div class="bal-row">
+              <span class="bal-row-label">其他資產</span>
+              <input type="number" class="bal-input" data-section="assets" data-field="other" placeholder="0" min="0" onchange="onBalanceFieldChange(this)" />
+            </div>
+            <div class="bal-total-row">
+              <span>資產合計</span>
+              <span class="bal-total-val positive" id="bal-assets-subtotal">NT$0</span>
+            </div>
+          </div>
+
+          <!-- 負債 -->
+          <div class="bal-card">
+            <div class="bal-card-title">🏦 負債</div>
+            <!-- 個人模式 -->
+            <div class="bal-row" data-mode="personal">
+              <span class="bal-row-label">信用卡未繳餘額</span>
+              <input type="number" class="bal-input" data-section="liabilities" data-field="creditCard" data-mode="personal" placeholder="0" min="0" onchange="onBalanceFieldChange(this)" />
+            </div>
+            <div class="bal-row" data-mode="personal">
+              <span class="bal-row-label">房貸餘額</span>
+              <input type="number" class="bal-input" data-section="liabilities" data-field="mortgage" data-mode="personal" placeholder="0" min="0" onchange="onBalanceFieldChange(this)" />
+            </div>
+            <div class="bal-row" data-mode="personal">
+              <span class="bal-row-label">車貸餘額</span>
+              <input type="number" class="bal-input" data-section="liabilities" data-field="carLoan" data-mode="personal" placeholder="0" min="0" onchange="onBalanceFieldChange(this)" />
+            </div>
+            <div class="bal-row" data-mode="personal">
+              <span class="bal-row-label">學貸餘額</span>
+              <input type="number" class="bal-input" data-section="liabilities" data-field="studentLoan" data-mode="personal" placeholder="0" min="0" onchange="onBalanceFieldChange(this)" />
+            </div>
+            <!-- 公司模式 -->
+            <div class="bal-row" data-mode="company">
+              <span class="bal-row-label">應付帳款</span>
+              <input type="number" class="bal-input" data-section="liabilities" data-field="payables" data-mode="company" placeholder="0" min="0" onchange="onBalanceFieldChange(this)" />
+            </div>
+            <div class="bal-row" data-mode="company">
+              <span class="bal-row-label">短期借款</span>
+              <input type="number" class="bal-input" data-section="liabilities" data-field="shortLoan" data-mode="company" placeholder="0" min="0" onchange="onBalanceFieldChange(this)" />
+            </div>
+            <div class="bal-row" data-mode="company">
+              <span class="bal-row-label">長期借款</span>
+              <input type="number" class="bal-input" data-section="liabilities" data-field="longLoan" data-mode="company" placeholder="0" min="0" onchange="onBalanceFieldChange(this)" />
+            </div>
+            <div class="bal-row">
+              <span class="bal-row-label">其他負債</span>
+              <input type="number" class="bal-input" data-section="liabilities" data-field="other" placeholder="0" min="0" onchange="onBalanceFieldChange(this)" />
+            </div>
+            <div class="bal-total-row">
+              <span>負債合計</span>
+              <span class="bal-total-val warning" id="bal-liab-subtotal">NT$0</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 圖表區 -->
+        <div class="bal-charts">
+          <div class="bal-chart-card">
+            <div class="bal-chart-title">📊 資產結構圓餅圖</div>
+            <div class="bal-chart-wrap"><canvas id="chart-assets-pie"></canvas></div>
+          </div>
+          <div class="bal-chart-card">
+            <div class="bal-chart-title">📊 資產 vs 負債對比</div>
+            <div class="bal-chart-wrap"><canvas id="chart-balance-bar"></canvas></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 財務儀表板 -->
+    <div class="tab-panel tab-content" id="tab-dashboard">
+      <div class="container">
+        <div class="tab-usage-bar">
+          <span class="tab-usage-icon">💡</span>
+          <span>綜合所有財務數據，計算你的財務健康分數（0～100 分），並提供改善建議與比較分析。</span>
+        </div>
+        <!-- 總分區：Gauge + 等級 -->
+        <div class="dash-score-card">
+          <div class="dash-gauge-wrap">
+            <canvas id="gauge-chart"></canvas>
+          </div>
+          <div class="dash-score-right">
+            <div class="dash-score-num" id="dash-score-num">--</div>
+            <div class="dash-score-grade" id="dash-score-grade">財務健康評分</div>
+            <div class="dash-score-desc" id="dash-score-desc">請先在各頁面填入財務數據，儀表板將自動計算你的健康分數。</div>
+          </div>
+        </div>
+
+        <!-- 五大指標卡片 -->
+        <div class="dash-indicators" id="dash-indicators">
+          <!-- 由 JS 動態填入 -->
+        </div>
+
+        <!-- 示警與建議 -->
+        <div class="dash-warnings" id="dash-warnings">
+          <div class="all-good-box">
+            <span style="font-size:28px;">📋</span>
+            <span>請先在各頁面填入數據，即可查看財務健康狀況與改善建議。</span>
+          </div>
+        </div>
+
+        <!-- 月度體檢歷史 -->
+        <div class="dash-history-card">
+          <div class="dash-history-header">
+            <div class="dash-history-title">📅 月度體檢歷史</div>
+            <button class="save-check-btn" id="save-check-btn" onclick="saveMonthlyCheck(this)">
+              💾 儲存本月體檢結果
+            </button>
+          </div>
+          <table class="history-tbl">
+            <thead>
+              <tr>
+                <th>日期</th>
+                <th>總分</th>
+                <th>儲蓄率</th>
+                <th>緊急預備金</th>
+                <th>固定支出比</th>
+                <th>負債比</th>
+                <th>財富自由</th>
+              </tr>
+            </thead>
+            <tbody id="history-tbody"></tbody>
+          </table>
+          <div class="history-chart-wrap">
+            <canvas id="chart-history-line"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 年度目標 -->
+    <div class="tab-panel tab-content" id="tab-goals">
+      <div class="container">
+        <div class="tab-usage-bar">
+          <span class="tab-usage-icon">💡</span>
+          <span>設定年度財務目標（如：存款 10 萬、還清信貸、購屋頭期款），並追蹤每月進度達成狀況。</span>
+        </div>
+        <!-- 四大目標卡片 -->
+        <div class="goals-grid">
+
+          <!-- 1. 年度存錢目標 -->
+          <div class="goal-card">
+            <div class="goal-card-header">
+              <div class="goal-card-icon" style="background:#e8f4fc;">💰</div>
+              <div>
+                <div class="goal-card-title">年度存錢目標</div>
+                <div class="goal-card-sub">今年計劃存多少錢？</div>
+              </div>
+            </div>
+            <div class="goal-input-row">
+              <span class="goal-input-label">目標金額</span>
+              <input type="number" class="goal-input" id="g-saving-goal" placeholder="100000" min="0" onchange="onGoalChange()" />
+            </div>
+            <div class="goal-input-row">
+              <span class="goal-input-label">目前累計</span>
+              <input type="number" class="goal-input" id="g-saving-current" placeholder="0" min="0" onchange="onGoalChange()" />
+            </div>
+            <div class="goal-progress-wrap">
+              <div class="goal-progress-label">
+                <span>達成進度</span>
+                <span class="goal-progress-pct" id="g-saving-pct">0%</span>
+              </div>
+              <div class="goal-progress-bar-bg">
+                <div class="goal-progress-bar" id="g-saving-bar" style="width:0%"></div>
+              </div>
+            </div>
+            <div class="goal-stats-row">
+              <div class="goal-stat-item"><strong id="g-saving-gap">NT$0</strong>距離目標</div>
+              <div class="goal-stat-item"><strong id="g-saving-months">—</strong>預計達成</div>
+            </div>
+          </div>
+
+          <!-- 2. 年度還債目標 -->
+          <div class="goal-card">
+            <div class="goal-card-header">
+              <div class="goal-card-icon" style="background:#fdecea;">🏦</div>
+              <div>
+                <div class="goal-card-title">年度還債目標</div>
+                <div class="goal-card-sub">今年計劃還多少負債？</div>
+              </div>
+            </div>
+            <div class="goal-input-row">
+              <span class="goal-input-label">目標金額</span>
+              <input type="number" class="goal-input" id="g-debt-goal" placeholder="60000" min="0" onchange="onGoalChange()" />
+            </div>
+            <div class="goal-input-row">
+              <span class="goal-input-label">目前累計</span>
+              <input type="number" class="goal-input" id="g-debt-current" placeholder="0" min="0" onchange="onGoalChange()" />
+            </div>
+            <div class="goal-progress-wrap">
+              <div class="goal-progress-label">
+                <span>達成進度</span>
+                <span class="goal-progress-pct" id="g-debt-pct">0%</span>
+              </div>
+              <div class="goal-progress-bar-bg">
+                <div class="goal-progress-bar" id="g-debt-bar" style="width:0%"></div>
+              </div>
+            </div>
+            <div class="goal-stats-row">
+              <div class="goal-stat-item"><strong id="g-debt-gap">NT$0</strong>距離目標</div>
+              <div class="goal-stat-item"><strong id="g-debt-months">—</strong>預計達成</div>
+            </div>
+          </div>
+
+          <!-- 3. 年度投資目標 -->
+          <div class="goal-card">
+            <div class="goal-card-header">
+              <div class="goal-card-icon" style="background:#e8f8ef;">📈</div>
+              <div>
+                <div class="goal-card-title">年度投資目標</div>
+                <div class="goal-card-sub">今年計劃投資多少？</div>
+              </div>
+            </div>
+            <div class="goal-input-row">
+              <span class="goal-input-label">目標金額</span>
+              <input type="number" class="goal-input" id="g-invest-goal" placeholder="120000" min="0" onchange="onGoalChange()" />
+            </div>
+            <div class="goal-input-row">
+              <span class="goal-input-label">目前累計</span>
+              <input type="number" class="goal-input" id="g-invest-current" placeholder="0" min="0" onchange="onGoalChange()" />
+            </div>
+            <div class="goal-progress-wrap">
+              <div class="goal-progress-label">
+                <span>達成進度</span>
+                <span class="goal-progress-pct" id="g-invest-pct">0%</span>
+              </div>
+              <div class="goal-progress-bar-bg">
+                <div class="goal-progress-bar" id="g-invest-bar" style="width:0%"></div>
+              </div>
+            </div>
+            <div class="goal-stats-row">
+              <div class="goal-stat-item"><strong id="g-invest-gap">NT$0</strong>距離目標</div>
+              <div class="goal-stat-item"><strong id="g-invest-months">—</strong>預計達成</div>
+            </div>
+          </div>
+
+          <!-- 4. 財富自由目標 -->
+          <div class="goal-card">
+            <div class="goal-card-header">
+              <div class="goal-card-icon" style="background:#fef9e7;">🏆</div>
+              <div>
+                <div class="goal-card-title">財富自由目標</div>
+                <div class="goal-card-sub">目標淨資產金額（用於儀表板計算）</div>
+              </div>
+            </div>
+            <div class="goal-input-row">
+              <span class="goal-input-label">目標金額</span>
+              <input type="number" class="goal-input" id="g-freedom-goal" placeholder="10000000" min="0" onchange="onGoalChange()" />
+            </div>
+            <div class="goal-input-row">
+              <span class="goal-input-label">
+                目前淨資產
+                <span class="goal-auto-tag">自動</span>
+              </span>
+              <input type="number" class="goal-input" id="g-freedom-current" placeholder="0" readonly />
+            </div>
+            <div class="goal-progress-wrap">
+              <div class="goal-progress-label">
+                <span>達成進度</span>
+                <span class="goal-progress-pct" id="g-freedom-pct">0%</span>
+              </div>
+              <div class="goal-progress-bar-bg">
+                <div class="goal-progress-bar" id="g-freedom-bar" style="width:0%"></div>
+              </div>
+            </div>
+            <div class="goal-stats-row">
+              <div class="goal-stat-item"><strong id="g-freedom-gap">NT$0</strong>距離目標</div>
+              <div class="goal-stat-item"><strong id="g-freedom-months">—</strong>預計達成</div>
+            </div>
+          </div>
+
+        </div><!-- /goals-grid -->
+      </div>
+    </div>
+
+    <!-- ============================================================
+         TAB 6 — 💸 現金流預測與預警
+         ============================================================ -->
+    <div class="tab-panel tab-content" id="tab-cashflow">
+      <div class="container">
+
+        <div class="tab-usage-bar">
+          <span class="tab-usage-icon">💡</span>
+          <span>根據你的<strong>歷史收支資料</strong>自動計算並預測未來12個月的現金流狀況。系統將即時發出預警，並提供<strong>具體的財務行動方案</strong>，幫助你提早因應資金危機。</span>
+        </div>
+
+        <!-- 預警橫幅 -->
+        <div id="cf-warning-banner" class="cf-warning-banner hidden"></div>
+
+        <!-- 頂部摘要卡片 -->
+        <div class="cf-summary-grid">
+          <div class="cf-summary-card" id="cf-card-cash">
+            <div class="cf-label">目前現金儲備</div>
+            <div class="cf-value" id="cf-current-cash">NT$ 0</div>
+            <div class="cf-sub">現金 ＋ 存款（來自資產負債表）</div>
+          </div>
+          <div class="cf-summary-card" id="cf-card-net">
+            <div class="cf-label">月均淨現金流</div>
+            <div class="cf-value" id="cf-avg-net">—</div>
+            <div class="cf-sub">過去3個月平均（收入 − 支出）</div>
+          </div>
+          <div class="cf-summary-card" id="cf-card-runway">
+            <div class="cf-label">現金可撐月數</div>
+            <div class="cf-value" id="cf-runway">—</div>
+            <div class="cf-sub">按目前消耗速度估算</div>
+          </div>
+          <div class="cf-summary-card" id="cf-crisis-card">
+            <div class="cf-label">⚠️ 首次危機月份</div>
+            <div class="cf-value" id="cf-crisis-month">—</div>
+            <div class="cf-sub">預計餘額首次低於安全水位</div>
+          </div>
+        </div>
+
+        <!-- 12個月預測折線圖 -->
+        <div class="app-card">
+          <div class="app-card-header" style="flex-wrap:wrap;gap:8px;">
+            <div class="app-card-title">📊 未來12個月現金流預測圖</div>
+            <div class="cf-legend">
+              <span class="cf-legend-dot income"></span>預測收入
+              <span class="cf-legend-dot expense"></span>預測支出
+              <span class="cf-legend-line"></span>累計現金餘額
+            </div>
+          </div>
+          <div class="app-card-body">
+            <div class="chart-wrap" style="height:320px;position:relative;">
+              <canvas id="chart-cashflow"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- 逐月明細 + 解決方案 -->
+        <div class="cf-two-col">
+          <!-- 逐月明細表 -->
+          <div class="app-card">
+            <div class="app-card-header">
+              <div class="app-card-title">📋 逐月預測明細</div>
+            </div>
+            <div class="app-card-body" style="padding:0;overflow:auto;">
+              <table class="cf-table">
+                <thead>
+                  <tr>
+                    <th style="text-align:left;">月份</th>
+                    <th>預測收入</th>
+                    <th>預測支出</th>
+                    <th>淨現金流</th>
+                    <th>累計餘額</th>
+                    <th>狀態</th>
+                  </tr>
+                </thead>
+                <tbody id="cf-table-body">
+                  <tr><td colspan="6" class="cf-no-data">請先輸入收支資料以產生預測</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 財務顧問解決方案 -->
+          <div class="app-card">
+            <div class="app-card-header">
+              <div class="app-card-title" id="cf-solution-title">💡 財務顧問行動建議</div>
+            </div>
+            <div class="app-card-body">
+              <div id="cf-solutions-list">
+                <div class="cf-solution-item safe">
+                  <div class="cf-sol-title">📊 開始輸入資料</div>
+                  <p>請先在「收支記錄」和「收入追蹤」Tab 輸入至少1個月的資料，系統即可自動產生現金流預測與行動建議。</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 預測說明 -->
+        <div class="cf-assumptions">
+          <div class="cf-assumptions-title">📌 預測說明與假設</div>
+          <div id="cf-assumptions-text">預測基於過去最多3個月的收支資料平均值。若資料不足，將以現有月份計算。實際結果可能因市場變化、季節性因素而有所不同，建議每月更新資料以提高準確度。</div>
+        </div>
+
+      </div>
+    </div><!-- /tab-cashflow -->
+
+  </main>
+  <div class="app-toast" id="app-toast"></div>
+
+  <!-- 編輯支出 Modal -->
+  <div class="edit-modal-overlay" id="edit-modal-overlay" onclick="handleEditOverlayClick(event)">
+    <div class="edit-modal">
+      <div class="edit-modal-title">✏️ 編輯支出記錄</div>
+      <input type="hidden" id="edit-expense-id" />
+      <div class="edit-modal-grid">
+        <div>
+          <div class="edit-field-label">日期</div>
+          <input type="date" class="edit-field-input" id="edit-date" />
+        </div>
+        <div>
+          <div class="edit-field-label">類別</div>
+          <select class="edit-field-input auto-bg" id="edit-category">
+            <option value="餐飲">🍜 餐飲</option>
+            <option value="交通">🚌 交通</option>
+            <option value="娛樂">🎮 娛樂</option>
+            <option value="購物">🛍️ 購物</option>
+            <option value="醫療">🏥 醫療</option>
+            <option value="保險">🛡️ 保險</option>
+            <option value="投資">📊 投資</option>
+            <option value="固定支出">📌 固定支出</option>
+            <option value="其他">📦 其他</option>
+          </select>
+        </div>
+        <div class="full">
+          <div class="edit-field-label">項目名稱</div>
+          <input type="text" class="edit-field-input" id="edit-name" placeholder="例：午餐、租金…" />
+        </div>
+        <div>
+          <div class="edit-field-label">金額（NT$）</div>
+          <input type="number" class="edit-field-input" id="edit-amount" placeholder="0" min="0" />
+        </div>
+        <div>
+          <div class="edit-field-label">備註</div>
+          <input type="text" class="edit-field-input" id="edit-note" placeholder="選填" />
+        </div>
+        <div class="full" style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--gray-50);border-radius:8px;border:1.5px solid var(--gray-200);">
+          <span style="font-size:14px;font-weight:600;color:var(--gray-600);">📌 固定支出（每月固定發生）</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="edit-fixed" />
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+      <div class="edit-modal-footer">
+        <button class="btn-cancel" onclick="closeEditModal()">取消</button>
+        <button class="btn-save"   onclick="saveEditExpense()">💾 儲存修改</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+/* ========== TAB 3: 資產負債 ========== */
+.bal-kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
+.bal-kpi { background: var(--white); border-radius: var(--radius-sm); padding: 20px 16px; box-shadow: var(--shadow-sm); text-align: center; border: 1.5px solid var(--gray-200); }
+.bal-kpi-label { font-size: 12px; color: var(--gray-600); margin-bottom: 6px; font-weight: 600; }
+.bal-kpi-value { font-size: 22px; font-weight: 800; color: var(--primary); line-height: 1.2; }
+.bal-kpi-value.positive { color: var(--green); }
+.bal-kpi-value.warning  { color: var(--red); }
+.bal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px; }
+.bal-card { background: var(--white); border-radius: var(--radius); padding: 24px; box-shadow: var(--shadow-sm); }
+.bal-card-title { font-size: 15px; font-weight: 700; color: var(--primary); margin-bottom: 16px; padding-bottom: 12px; border-bottom: 2px solid var(--gray-100); display: flex; align-items: center; gap: 8px; }
+.bal-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--gray-100); }
+.bal-row:last-of-type { border-bottom: none; }
+.bal-row-label { font-size: 14px; color: var(--gray-600); }
+.bal-input { width: 150px; padding: 8px 12px; border: 1.5px solid var(--gray-200); border-radius: 8px; font-family: 'Noto Sans TC', sans-serif; font-size: 14px; text-align: right; background: #fffde7; transition: border-color .2s; outline: none; }
+.bal-input:focus { border-color: var(--primary); }
+.bal-total-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; margin-top: 8px; border-top: 2px solid var(--gray-200); font-weight: 700; font-size: 15px; color: var(--primary); }
+.bal-total-val { font-size: 18px; font-weight: 800; }
+.bal-total-val.positive { color: var(--green); }
+.bal-total-val.warning  { color: var(--red); }
+.bal-charts { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+.bal-chart-card { background: var(--white); border-radius: var(--radius); padding: 24px; box-shadow: var(--shadow-sm); }
+.bal-chart-title { font-size: 14px; font-weight: 700; color: var(--primary); margin-bottom: 16px; }
+.bal-chart-wrap { height: 220px; position: relative; }
+
+/* ========== TAB 4: 財務儀表板 ========== */
+.dash-score-card { background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%); border-radius: var(--radius); padding: 32px 40px; margin-bottom: 28px; display: flex; align-items: center; gap: 48px; color: var(--white); box-shadow: var(--shadow-md); }
+.dash-gauge-wrap { position: relative; width: 200px; height: 112px; flex-shrink: 0; }
+.dash-score-right { flex: 1; }
+.dash-score-num { font-size: 64px; font-weight: 900; color: var(--accent); line-height: 1; margin-bottom: 8px; }
+.dash-score-grade { font-size: 20px; font-weight: 700; margin-bottom: 6px; }
+.dash-score-desc { font-size: 14px; color: rgba(255,255,255,.72); line-height: 1.7; }
+.dash-indicators { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-bottom: 28px; }
+.ind-card { background: var(--white); border-radius: var(--radius); padding: 18px 14px; box-shadow: var(--shadow-sm); border-top: 4px solid var(--gray-200); text-align: center; transition: transform .2s, box-shadow .2s; }
+.ind-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
+.ind-card.green  { border-top-color: var(--green); }
+.ind-card.yellow { border-top-color: var(--yellow); }
+.ind-card.red    { border-top-color: var(--red); }
+.ind-dot { width: 10px; height: 10px; border-radius: 50%; margin: 0 auto 10px; }
+.ind-dot.green  { background: var(--green);  box-shadow: 0 0 6px rgba(39,174,96,.6); }
+.ind-dot.yellow { background: var(--yellow); box-shadow: 0 0 6px rgba(241,196,15,.6); }
+.ind-dot.red    { background: var(--red);    box-shadow: 0 0 6px rgba(231,76,60,.6); animation: pulseRed 1.5s infinite; }
+@keyframes pulseRed { 0%,100% { box-shadow: 0 0 6px rgba(231,76,60,.6); } 50% { box-shadow: 0 0 16px rgba(231,76,60,1); } }
+.ind-name  { font-size: 11px; color: var(--gray-600); margin-bottom: 8px; font-weight: 600; }
+.ind-value { font-size: 20px; font-weight: 800; color: var(--primary); line-height: 1; margin-bottom: 4px; }
+.ind-std   { font-size: 10px; color: var(--gray-400); margin-bottom: 10px; line-height: 1.4; }
+.ind-score-badge { font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 20px; display: inline-block; }
+.ind-score-badge.green  { background: #e8f8ef; color: #1e8449; }
+.ind-score-badge.yellow { background: #fefde7; color: #9a7d0a; }
+.ind-score-badge.red    { background: #fdedeb; color: #c0392b; }
+.dash-warnings { margin-bottom: 28px; display: flex; flex-direction: column; gap: 12px; }
+.warn-box { background: #fdedec; border: 2px solid var(--red); border-radius: var(--radius-sm); padding: 16px 20px; animation: pulseBorder 2.5s infinite; }
+@keyframes pulseBorder { 0%,100% { border-color: var(--red); } 50% { border-color: #f1948a; } }
+.warn-title { font-size: 14px; font-weight: 700; color: #c0392b; margin-bottom: 6px; }
+.warn-desc  { font-size: 13px; color: #7b241c; line-height: 1.7; }
+.all-good-box { background: #e8f8ef; border: 2px solid var(--green); border-radius: var(--radius-sm); padding: 20px 24px; display: flex; align-items: center; gap: 16px; font-size: 14px; color: #1e8449; font-weight: 600; }
+.dash-history-card { background: var(--white); border-radius: var(--radius); padding: 24px; box-shadow: var(--shadow-sm); }
+.dash-history-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
+.dash-history-title { font-size: 15px; font-weight: 700; color: var(--primary); }
+.save-check-btn { background: var(--primary); color: var(--white); border: none; padding: 9px 20px; border-radius: 8px; font-family: 'Noto Sans TC', sans-serif; font-weight: 700; font-size: 13px; cursor: pointer; transition: background .2s; }
+.save-check-btn:hover { background: var(--primary-light); }
+.save-check-btn:disabled { opacity: .6; cursor: default; }
+.history-tbl { width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 20px; }
+.history-tbl th { padding: 8px 12px; text-align: left; color: var(--gray-600); font-weight: 600; border-bottom: 2px solid var(--gray-200); background: var(--gray-50); white-space: nowrap; }
+.history-tbl td { padding: 10px 12px; border-bottom: 1px solid var(--gray-100); }
+.history-tbl tr:last-child td { border-bottom: none; }
+.history-empty { text-align: center; color: var(--gray-400); padding: 24px !important; }
+.history-chart-wrap { height: 180px; position: relative; }
+
+@media (max-width: 900px) {
+  .bal-grid { grid-template-columns: 1fr; }
+  .bal-kpi-grid { grid-template-columns: repeat(2, 1fr); }
+  .bal-charts { grid-template-columns: 1fr; }
+  .dash-indicators { grid-template-columns: repeat(3, 1fr); }
+  .dash-score-card { flex-direction: column; gap: 20px; align-items: flex-start; }
+  .dash-gauge-wrap { width: 160px; height: 90px; }
+  .dash-score-num { font-size: 48px; }
+}
+@media (max-width: 600px) {
+  .dash-indicators { grid-template-columns: repeat(2, 1fr); }
+  .bal-input { width: 110px; }
+  .dash-score-card { padding: 24px 20px; }
+}
+
+/* ========== TAB 5: 年度目標 ========== */
+.goals-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; margin-bottom: 28px; }
+.goal-card { background: var(--white); border-radius: var(--radius); padding: 28px; box-shadow: var(--shadow-sm); border: 1.5px solid var(--gray-200); transition: box-shadow .2s; }
+.goal-card:hover { box-shadow: var(--shadow-md); }
+.goal-card-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+.goal-card-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+.goal-card-title { font-size: 16px; font-weight: 700; color: var(--primary); }
+.goal-card-sub { font-size: 12px; color: var(--gray-400); margin-top: 2px; }
+.goal-input-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.goal-input-label { font-size: 13px; color: var(--gray-600); font-weight: 600; }
+.goal-input { width: 160px; padding: 8px 12px; border: 1.5px solid var(--gray-200); border-radius: 8px; font-family: 'Noto Sans TC', sans-serif; font-size: 14px; text-align: right; background: #fffde7; outline: none; transition: border-color .2s; }
+.goal-input:focus { border-color: var(--primary); }
+.goal-input[readonly] { background: var(--gray-50); color: var(--gray-600); cursor: default; }
+.goal-auto-tag { font-size: 10px; background: rgba(26,58,92,.1); color: var(--primary); padding: 2px 7px; border-radius: 10px; font-weight: 700; margin-left: 6px; vertical-align: middle; }
+.goal-progress-wrap { margin: 16px 0 10px; }
+.goal-progress-label { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 13px; font-weight: 700; }
+.goal-progress-pct { color: var(--primary); }
+.goal-progress-bar-bg { background: var(--gray-100); border-radius: 20px; height: 10px; overflow: hidden; }
+.goal-progress-bar { height: 100%; border-radius: 20px; transition: width .8s ease; background: linear-gradient(90deg, var(--primary), #3a82c4); }
+.goal-progress-bar.great { background: linear-gradient(90deg, var(--green), #52d98c); }
+.goal-progress-bar.warn  { background: linear-gradient(90deg, var(--yellow), #f8d758); }
+.goal-progress-bar.danger{ background: linear-gradient(90deg, var(--red), #f1948a); }
+.goal-stats-row { display: flex; justify-content: space-between; font-size: 12px; color: var(--gray-600); margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--gray-100); }
+.goal-stat-item strong { display: block; font-size: 14px; font-weight: 800; color: var(--primary); margin-bottom: 2px; }
+
+/* ========== 資料管理按鈕 ========== */
+.data-tools { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.data-tool-btn { display: inline-flex; align-items: center; gap: 5px; padding: 7px 14px; border-radius: 8px; font-family: 'Noto Sans TC', sans-serif; font-size: 12px; font-weight: 700; cursor: pointer; border: 1.5px solid; transition: all .2s; white-space: nowrap; }
+.data-tool-btn.export  { background: rgba(41,128,185,.1); color: #1a6fa8; border-color: rgba(41,128,185,.3); }
+.data-tool-btn.export:hover  { background: #2980b9; color: #fff; }
+.data-tool-btn.import  { background: rgba(39,174,96,.1); color: #1a7a44; border-color: rgba(39,174,96,.3); }
+.data-tool-btn.import:hover  { background: #27ae60; color: #fff; }
+.data-tool-btn.clear   { background: rgba(231,76,60,.1); color: #c0392b; border-color: rgba(231,76,60,.3); }
+.data-tool-btn.clear:hover   { background: #e74c3c; color: #fff; }
+
+/* Toast */
+.app-toast { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(16px); background: #1e293b; color: #fff; padding: 12px 28px; border-radius: 30px; font-size: 14px; font-weight: 600; z-index: 9999; opacity: 0; transition: all .3s ease; pointer-events: none; box-shadow: 0 4px 20px rgba(0,0,0,.25); white-space: nowrap; }
+.app-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+@media (max-width: 768px) {
+  .goals-grid { grid-template-columns: 1fr; }
+  .goal-input { width: 130px; }
+  .data-tools { gap: 6px; }
+}
+</style>
+
+<!-- =========================================
+     JAVASCRIPT
+     ========================================= -->
+<script>
+  // ========================================
+  // 1. AppData — LocalStorage 資料管理
+  // ========================================
+  // ========================================
+  // MODE MANAGEMENT（個人 / 公司）
+  // ========================================
+  const PERSONAL_STORAGE_KEY = 'finHealth_personal_v1';
+  const COMPANY_STORAGE_KEY  = 'finHealth_company_v1';
+
+  let currentMode = localStorage.getItem('finHealth_mode') || null;
+
+  function getStorageKey() {
+    return currentMode === 'company' ? COMPANY_STORAGE_KEY : PERSONAL_STORAGE_KEY;
+  }
+
+  function defaultAppData() {
+    const currentYear = new Date().getFullYear();
+    const incomeYear = {};
+    const expYear = {};
+    const isCompany = currentMode === 'company';
+    for (let m = 1; m <= 12; m++) {
+      if (isCompany) {
+        incomeYear[m] = { revenue: 0, service: 0, consulting: 0, investment: 0, other: 0 };
+      } else {
+        incomeYear[m] = { salary: 0, freelance: 0, investment: 0, sidejob: 0, other: 0 };
+      }
+      expYear[m] = [];
+    }
+    if (isCompany) {
+      return {
+        income: { [currentYear]: incomeYear },
+        expenses: { [currentYear]: expYear },
+        assets: { cash: 0, deposit: 0, receivables: 0, inventory: 0, equipment: 0, other: 0 },
+        liabilities: { payables: 0, shortLoan: 0, longLoan: 0, other: 0 },
+        goals: { savingGoal: 0, debtGoal: 0, investGoal: 0, freedomGoal: 0, currentSaving: 0, currentDebtPaid: 0, currentInvest: 0 },
+        history: []
+      };
+    } else {
+      return {
+        income: { [currentYear]: incomeYear },
+        expenses: { [currentYear]: expYear },
+        assets: { cash: 0, deposit: 0, stocks: 0, property: 0, other: 0 },
+        liabilities: { creditCard: 0, mortgage: 0, carLoan: 0, studentLoan: 0, other: 0 },
+        goals: { savingGoal: 0, debtGoal: 0, investGoal: 0, freedomGoal: 0, currentSaving: 0, currentDebtPaid: 0, currentInvest: 0 },
+        history: []
+      };
+    }
+  }
+
+  const AppData = {
+    data: null,
+
+    load() {
+      try {
+        const raw = localStorage.getItem(getStorageKey());
+        this.data = raw ? JSON.parse(raw) : defaultAppData();
+      } catch (e) {
+        this.data = defaultAppData();
+      }
+    },
+
+    save() {
+      localStorage.setItem(getStorageKey(), JSON.stringify(this.data));
+    },
+
+    ensureYear(section, year) {
+      if (!this.data[section][year]) {
+        if (section === 'income') {
+          this.data[section][year] = {};
+          const isCompany = currentMode === 'company';
+          for (let m = 1; m <= 12; m++) {
+            if (isCompany) {
+              this.data[section][year][m] = { revenue: 0, service: 0, consulting: 0, investment: 0, other: 0 };
+            } else {
+              this.data[section][year][m] = { salary: 0, freelance: 0, investment: 0, sidejob: 0, other: 0 };
+            }
+          }
+        } else {
+          this.data[section][year] = {};
+          for (let m = 1; m <= 12; m++) this.data[section][year][m] = [];
+        }
+      }
+    },
+
+    // Income helpers
+    getIncome(year, month) {
+      this.ensureYear('income', year);
+      return this.data.income[year][month] || { salary: 0, freelance: 0, investment: 0, sidejob: 0, other: 0 };
+    },
+    setIncome(year, month, field, val) {
+      this.ensureYear('income', year);
+      this.data.income[year][month][field] = val;
+      this.save();
+    },
+    getMonthTotalIncome(year, month) {
+      const d = this.getIncome(year, month);
+      return Object.values(d).reduce((s, v) => s + (v || 0), 0);
+    },
+
+    // Expense helpers
+    getExpenses(year, month) {
+      this.ensureYear('expenses', year);
+      return this.data.expenses[year][month] || [];
+    },
+    addExpense(year, month, item) {
+      this.ensureYear('expenses', year);
+      this.data.expenses[year][month].push(item);
+      this.save();
+    },
+    deleteExpense(year, month, id) {
+      this.ensureYear('expenses', year);
+      this.data.expenses[year][month] = this.data.expenses[year][month].filter(e => e.id !== id);
+      this.save();
+    },
+    getMonthTotalExpense(year, month) {
+      return this.getExpenses(year, month).reduce((s, e) => s + e.amount, 0);
+    }
+  };
+
+  // Load data on startup
+  AppData.load();
+
+  // ========================================
+  // 2. Utility helpers
+  // ========================================
+  const fmt = (n) => 'NT$' + Math.round(n).toLocaleString('zh-TW');
+  const fmtShort = (n) => {
+    if (n >= 10000) return (n / 10000).toFixed(1) + 'w';
+    return Math.round(n).toLocaleString('zh-TW');
+  };
+
+  const CATEGORY_COLORS = {
+    '餐飲': '#e74c3c', '交通': '#3498db', '娛樂': '#9b59b6',
+    '購物': '#e67e22', '醫療': '#1abc9c', '保險': '#2980b9',
+    '投資': '#27ae60', '固定支出': '#f5a623', '其他': '#95a5a6'
+  };
+
+  const CAT_EMOJI = {
+    '餐飲': '🍜', '交通': '🚌', '娛樂': '🎮', '購物': '🛍️',
+    '醫療': '🏥', '保險': '🛡️', '投資': '📊', '固定支出': '📌', '其他': '📦'
+  };
+
+  const CATEGORY_COLORS_COMPANY = {
+    '薪資費用': '#1a3a5c', '租金':  '#2980b9', '水電費':  '#16a085',
+    '行銷費用': '#8e44ad', '原料進貨': '#e67e22', '設備折舊': '#95a5a6',
+    '雜費':    '#7f8c8d', '其他':   '#bdc3c7'
+  };
+
+  const CAT_EMOJI_COMPANY = {
+    '薪資費用': '👥', '租金': '🏠', '水電費': '💡',
+    '行銷費用': '📢', '原料進貨': '📦', '設備折舊': '🔧',
+    '雜費': '📋', '其他': '➕'
+  };
+
+  function getCategoryColors() { return currentMode === 'company' ? CATEGORY_COLORS_COMPANY : CATEGORY_COLORS; }
+  function getCatEmoji()        { return currentMode === 'company' ? CAT_EMOJI_COMPANY       : CAT_EMOJI; }
+
+  const INCOME_FIELDS = [
+    { key: 'salary',     label: '💼 正職薪資', color: '#1a3a5c' },
+    { key: 'freelance',  label: '🖥️ 接案收入', color: '#2980b9' },
+    { key: 'investment', label: '📊 投資收益', color: '#27ae60' },
+    { key: 'sidejob',   label: '🌙 副業收入', color: '#f5a623' },
+    { key: 'other',     label: '➕ 其他收入', color: '#95a5a6' },
+  ];
+
+  const INCOME_FIELDS_COMPANY = [
+    { key: 'revenue',    label: '📦 產品銷售收入', color: '#1a3a5c' },
+    { key: 'service',   label: '🔧 服務收費',     color: '#2980b9' },
+    { key: 'consulting',label: '💼 顧問/諮詢費',  color: '#27ae60' },
+    { key: 'investment', label: '📊 投資收益',    color: '#f5a623' },
+    { key: 'other',     label: '➕ 其他收入',     color: '#95a5a6' },
+  ];
+
+  function getIncomeFields() {
+    return currentMode === 'company' ? INCOME_FIELDS_COMPANY : INCOME_FIELDS;
+  }
+
+  const MONTH_NAMES = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+
+  // ========================================
+  // 3. Mode Management
+  // ========================================
+  function selectMode(mode) {
+    currentMode = mode;
+    localStorage.setItem('finHealth_mode', mode);
+    document.getElementById('mode-select-screen').classList.add('hidden');
+    applyMode(mode);
+    AppData.load();
+    // Reset tab inits
+    expTabInited = false; incTabInited = false;
+    balTabInited = false; goalsTabInited = false;
+    // Initialize first tab
+    initExpensesTab();
+    initIncomeTab();
+  }
+
+  function switchMode() {
+    const newMode = currentMode === 'company' ? 'personal' : 'company';
+    if (!confirm(`確定切換到「${newMode === 'company' ? '公司' : '個人'}財務體檢」模式？\n（資料已自動分開儲存，切換後不會遺失）`)) return;
+    selectMode(newMode);
+    // Switch back to first tab
+    document.querySelectorAll('.tab-btn').forEach((b,i) => b.classList.toggle('active', i===0));
+    document.querySelectorAll('.tab-panel').forEach((p,i) => p.classList.toggle('active', i===0));
+  }
+
+  function applyMode(mode) {
+    const isCompany = mode === 'company';
+    document.getElementById('mode-logo-icon').textContent = isCompany ? '🏢' : '👤';
+    document.getElementById('mode-title-label').textContent = isCompany ? '公司財務體檢' : '個人財務體檢';
+    document.title = isCompany ? '公司財務體檢' : '個人財務體檢';
+    // 更新 Tab 3 說明文案
+    const balUsageEl = document.getElementById('bal-usage-text');
+    if (balUsageEl) {
+      balUsageEl.textContent = isCompany
+        ? '輸入你的各項企業資產（現金、應收帳款、存貨、設備）與負債（應付帳款、借款），計算企業淨值。'
+        : '輸入你的各項資產（現金、股票、不動產）與負債（貸款、信用卡），計算你的真實淨值。';
+    }
+  }
+
+  // Show mode selection if not chosen yet
+  window.addEventListener('DOMContentLoaded', () => {
+    if (!currentMode) {
+      document.getElementById('mode-select-screen').classList.remove('hidden');
+    } else {
+      document.getElementById('mode-select-screen').classList.add('hidden');
+      applyMode(currentMode);
+    }
+  });
+
+  // Tab switching
+  const tabBtns = document.querySelectorAll('.tab-btn');
+  const tabPanels = document.querySelectorAll('.tab-panel');
+  tabBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const targetId = btn.getAttribute('data-tab');
+      tabBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      tabPanels.forEach(panel => {
+        if (panel.id === targetId) {
+          panel.classList.add('active');
+          panel.style.animation = 'none';
+          panel.offsetHeight;
+          panel.style.animation = '';
+          // Refresh charts when switching
+          if (targetId === 'tab-expenses')  refreshExpensesTab();
+          if (targetId === 'tab-income')    refreshIncomeTab();
+          if (targetId === 'tab-balance')   refreshBalanceTab();
+          if (targetId === 'tab-dashboard') refreshDashboardTab();
+          if (targetId === 'tab-goals')     refreshGoalsTab();
+          if (targetId === 'tab-cashflow')  refreshCashFlowTab();
+        } else {
+          panel.classList.remove('active');
+        }
+      });
+    });
+  });
+
+  // ========================================
+  // 4. TAB 1 — 收支記錄
+  // ========================================
+  let expYear = new Date().getFullYear();
+  let expMonth = new Date().getMonth() + 1;
+  let chartExpPie = null;
+  let chartExpBar = null;
+  let expTabInited = false;
+
+  function buildYearOptions(selectEl, currentYear) {
+    selectEl.innerHTML = '';
+    const thisYear = new Date().getFullYear();
+    for (let y = thisYear - 2; y <= thisYear + 1; y++) {
+      const opt = document.createElement('option');
+      opt.value = y;
+      opt.textContent = y;
+      if (y === currentYear) opt.selected = true;
+      selectEl.appendChild(opt);
+    }
+  }
+
+  function buildMonthPills(containerId, activeMonth, onClickFn) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = '';
+    MONTH_NAMES.forEach((name, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'month-pill' + (i + 1 === activeMonth ? ' active' : '');
+      btn.textContent = name;
+      btn.addEventListener('click', () => onClickFn(i + 1));
+      container.appendChild(btn);
+    });
+  }
+
+  function updateCategoryOptions() {
+    const sel = document.getElementById('ef-category');
+    if (!sel) return;
+    if (currentMode === 'company') {
+      sel.innerHTML = `
+        <option value="薪資費用">👥 薪資費用</option>
+        <option value="租金">🏠 租金</option>
+        <option value="水電費">💡 水電費</option>
+        <option value="行銷費用">📢 行銷費用</option>
+        <option value="原料進貨">📦 原料/進貨</option>
+        <option value="設備折舊">🔧 設備折舊</option>
+        <option value="雜費">📋 雜費</option>
+        <option value="其他">➕ 其他</option>
+      `;
+    } else {
+      sel.innerHTML = `
+        <option value="餐飲">🍜 餐飲</option>
+        <option value="交通">🚌 交通</option>
+        <option value="娛樂">🎮 娛樂</option>
+        <option value="購物">🛍️ 購物</option>
+        <option value="醫療">🏥 醫療</option>
+        <option value="保險">🛡️ 保險</option>
+        <option value="投資">📊 投資</option>
+        <option value="固定支出">📌 固定支出</option>
+        <option value="其他">📦 其他</option>
+      `;
+    }
+  }
+
+  function initExpensesTab() {
+    if (expTabInited) { refreshExpensesTab(); return; }
+    expTabInited = true;
+
+    // Update category options based on mode
+    updateCategoryOptions();
+
+    // Set default date in form
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('ef-date').value = today;
+
+    // Year select
+    const yearSel = document.getElementById('exp-year-select');
+    buildYearOptions(yearSel, expYear);
+    yearSel.addEventListener('change', () => {
+      expYear = parseInt(yearSel.value);
+      buildMonthPills('exp-month-pills', expMonth, (m) => { expMonth = m; buildMonthPills('exp-month-pills', expMonth, arguments.callee); refreshExpensesTab(); });
+      refreshExpensesTab();
+    });
+
+    // Month pills
+    function onMonthClick(m) {
+      expMonth = m;
+      buildMonthPills('exp-month-pills', expMonth, onMonthClick);
+      refreshExpensesTab();
+    }
+    buildMonthPills('exp-month-pills', expMonth, onMonthClick);
+    // Rebind year change with onMonthClick in scope
+    yearSel.addEventListener('change', () => {
+      expYear = parseInt(yearSel.value);
+      refreshExpensesTab();
+    });
+
+    // Expense form submit
+    document.getElementById('expense-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const date = document.getElementById('ef-date').value;
+      const name = document.getElementById('ef-name').value.trim();
+      const category = document.getElementById('ef-category').value;
+      const amount = parseFloat(document.getElementById('ef-amount').value) || 0;
+      const isFixed = document.getElementById('ef-fixed').checked;
+      const note = document.getElementById('ef-note').value.trim();
+      if (!name || amount <= 0) return;
+      const item = {
+        id: Date.now().toString(),
+        date, name, category, amount, isFixed, note
+      };
+      AppData.addExpense(expYear, expMonth, item);
+      // Reset form partials
+      document.getElementById('ef-name').value = '';
+      document.getElementById('ef-amount').value = '';
+      document.getElementById('ef-note').value = '';
+      document.getElementById('ef-fixed').checked = false;
+      refreshExpensesTab();
+    });
+
+    refreshExpensesTab();
+  }
+
+  function refreshExpensesTab() {
+    const expenses = AppData.getExpenses(expYear, expMonth);
+    const totalExpense = expenses.reduce((s, e) => s + e.amount, 0);
+    const totalIncome = AppData.getMonthTotalIncome(expYear, expMonth);
+    const balance = totalIncome - totalExpense;
+    const saveRate = totalIncome > 0 ? ((balance / totalIncome) * 100).toFixed(1) + '%' : '—';
+
+    // KPI tiles
+    document.getElementById('kpi-income').textContent = fmt(totalIncome);
+    document.getElementById('kpi-expense').textContent = fmt(totalExpense);
+    const kpiBalance = document.getElementById('kpi-balance');
+    kpiBalance.textContent = fmt(balance);
+    kpiBalance.className = 'kpi-tile-val balance-val ' + (balance >= 0 ? 'pos' : 'neg');
+    document.getElementById('kpi-saverate').textContent = saveRate;
+
+    // Expense table
+    const tbody = document.getElementById('expense-tbody');
+    const sorted = [...expenses].sort((a, b) => a.date.localeCompare(b.date));
+    document.getElementById('exp-record-count').textContent = sorted.length + ' 筆';
+
+    if (sorted.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="empty-state-icon">📭</div>本月尚無支出記錄</div></td></tr>`;
+    } else {
+      tbody.innerHTML = sorted.map(e => {
+        const colors = getCategoryColors();
+        const emojis = getCatEmoji();
+        const color = colors[e.category] || '#95a5a6';
+        const emoji = emojis[e.category] || '📦';
+        return `<tr>
+          <td>${e.date}</td>
+          <td><span class="cat-badge" style="background:${color}22;color:${color};">${emoji} ${e.category}</span></td>
+          <td>${e.name}</td>
+          <td style="text-align:right;font-weight:700;">${fmt(e.amount)}</td>
+          <td style="text-align:center;"><span class="fixed-badge ${e.isFixed ? 'yes' : 'no'}">${e.isFixed ? '固定' : '彈性'}</span></td>
+          <td style="color:var(--gray-400);font-size:0.8rem;">${e.note || '—'}</td>
+          <td>
+            <div class="action-btns">
+              <button class="edit-btn" onclick="openEditModal('${e.id}')" title="編輯">✏️</button>
+              <button class="del-btn"  onclick="deleteExpense('${e.id}')" title="刪除">🗑️</button>
+            </div>
+          </td>
+        </tr>`;
+      }).join('');
+    }
+
+    // Category Pie Chart
+    const catMap = {};
+    expenses.forEach(e => { catMap[e.category] = (catMap[e.category] || 0) + e.amount; });
+    const catLabels = Object.keys(catMap);
+    const catVals = catLabels.map(k => catMap[k]);
+    const colors = getCategoryColors();
+    const catColors = catLabels.map(k => colors[k] || '#ccc');
+
+    const pieCtx = document.getElementById('chart-exp-pie').getContext('2d');
+    if (chartExpPie) chartExpPie.destroy();
+    if (catVals.length === 0) {
+      chartExpPie = new Chart(pieCtx, { type: 'doughnut', data: { labels: ['尚無資料'], datasets: [{ data: [1], backgroundColor: ['#e2e8f0'], borderWidth: 0 }] }, options: { plugins: { legend: { display: false } }, cutout: '60%' } });
+    } else {
+      chartExpPie = new Chart(pieCtx, {
+        type: 'doughnut',
+        data: {
+          labels: catLabels.map(k => (emojis[k] || '') + ' ' + k),
+          datasets: [{ data: catVals, backgroundColor: catColors, borderWidth: 2, borderColor: '#fff', hoverOffset: 8 }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          cutout: '58%',
+          plugins: {
+            legend: { position: 'bottom', labels: { font: { family: 'Noto Sans TC', size: 11 }, boxWidth: 12, padding: 8 } },
+            tooltip: { callbacks: { label: (ctx) => ` ${fmt(ctx.raw)} (${((ctx.raw/totalExpense)*100).toFixed(1)}%)` } }
+          }
+        }
+      });
+    }
+
+    // Fixed vs Flexible Bar Chart
+    const fixedAmt = expenses.filter(e => e.isFixed).reduce((s, e) => s + e.amount, 0);
+    const flexAmt = totalExpense - fixedAmt;
+    const barCtx = document.getElementById('chart-exp-bar').getContext('2d');
+    if (chartExpBar) chartExpBar.destroy();
+    chartExpBar = new Chart(barCtx, {
+      type: 'bar',
+      data: {
+        labels: ['固定支出', '彈性支出'],
+        datasets: [{
+          data: [fixedAmt, flexAmt],
+          backgroundColor: ['rgba(245,166,35,0.85)', 'rgba(26,58,92,0.75)'],
+          borderRadius: 8,
+          borderSkipped: false
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        indexAxis: 'y',
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: (ctx) => ' ' + fmt(ctx.raw) } }
+        },
+        scales: {
+          x: {
+            grid: { display: false },
+            ticks: { callback: (v) => 'NT$' + fmtShort(v), font: { family: 'Noto Sans TC', size: 11 } }
+          },
+          y: { grid: { display: false }, ticks: { font: { family: 'Noto Sans TC', size: 12, weight: '600' } } }
+        }
+      }
+    });
+  }
+
+  function openEditModal(id) {
+    const expenses = AppData.getExpenses(expYear, expMonth);
+    const e = expenses.find(ex => ex.id === id);
+    if (!e) return;
+
+    document.getElementById('edit-expense-id').value = id;
+    document.getElementById('edit-date').value        = e.date || '';
+    document.getElementById('edit-category').value    = e.category || '餐飲';
+    document.getElementById('edit-name').value        = e.name || '';
+    document.getElementById('edit-amount').value      = e.amount || '';
+    document.getElementById('edit-note').value        = e.note || '';
+    document.getElementById('edit-fixed').checked     = !!e.isFixed;
+
+    document.getElementById('edit-modal-overlay').classList.add('active');
+  }
+
+  function closeEditModal() {
+    document.getElementById('edit-modal-overlay').classList.remove('active');
+  }
+
+  function handleEditOverlayClick(event) {
+    if (event.target === document.getElementById('edit-modal-overlay')) closeEditModal();
+  }
+
+  function saveEditExpense() {
+    const id       = document.getElementById('edit-expense-id').value;
+    const date     = document.getElementById('edit-date').value;
+    const category = document.getElementById('edit-category').value;
+    const name     = document.getElementById('edit-name').value.trim();
+    const amount   = parseFloat(document.getElementById('edit-amount').value) || 0;
+    const note     = document.getElementById('edit-note').value.trim();
+    const isFixed  = document.getElementById('edit-fixed').checked;
+
+    if (!name || amount <= 0) {
+      showToast('⚠️ 請填寫項目名稱與金額');
+      return;
+    }
+
+    // 找到並更新該筆記錄
+    const expenses = AppData.getExpenses(expYear, expMonth);
+    const idx = expenses.findIndex(e => e.id === id);
+    if (idx === -1) { showToast('⚠️ 找不到該筆記錄'); return; }
+
+    expenses[idx] = { ...expenses[idx], date, category, name, amount, note, isFixed };
+    AppData.data.expenses[expYear][expMonth] = expenses;
+    AppData.save();
+
+    closeEditModal();
+    refreshExpensesTab();
+    showToast('✅ 記錄已更新！');
+  }
+
+  // ESC 鍵關閉編輯 Modal
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeEditModal();
+  });
+
+  function deleteExpense(id) {
+    if (!confirm('確定要刪除此筆記錄？')) return;
+    AppData.deleteExpense(expYear, expMonth, id);
+    refreshExpensesTab();
+  }
+
+  // ========================================
+  // 5. TAB 2 — 收入追蹤
+  // ========================================
+  let incYear = new Date().getFullYear();
+  let chartIncomeLine = null;
+  let chartIncomePie = null;
+  let incTabInited = false;
+
+  function initIncomeTab() {
+    if (incTabInited) { refreshIncomeTab(); return; }
+    incTabInited = true;
+
+    const yearSel = document.getElementById('inc-year-select');
+    buildYearOptions(yearSel, incYear);
+    yearSel.addEventListener('change', () => {
+      incYear = parseInt(yearSel.value);
+      renderIncomeTable();
+      refreshIncomeCharts();
+    });
+
+    renderIncomeTable();
+    refreshIncomeCharts();
+  }
+
+  function renderIncomeTable() {
+    const tbody = document.getElementById('income-tbody');
+    tbody.innerHTML = '';
+
+    // Data rows — one per income field
+    getIncomeFields().forEach(field => {
+      const tr = document.createElement('tr');
+      let html = `<td><span style="color:${field.color};font-weight:700;">${field.label}</span></td>`;
+      for (let m = 1; m <= 12; m++) {
+        const val = AppData.getIncome(incYear, m)[field.key] || 0;
+        html += `<td><input class="income-input" type="number" min="0"
+          data-month="${m}" data-field="${field.key}"
+          value="${val > 0 ? val : ''}" placeholder="0"
+          onchange="onIncomeChange(this)" /></td>`;
+      }
+      // Annual total per field
+      let annualSum = 0;
+      for (let m = 1; m <= 12; m++) annualSum += AppData.getIncome(incYear, m)[field.key] || 0;
+      html += `<td><span class="auto-cell" id="inc-annual-${field.key}">${annualSum > 0 ? fmtShort(annualSum) : '—'}</span></td>`;
+      tr.innerHTML = html;
+      tbody.appendChild(tr);
+    });
+
+    // Monthly total row
+    const totalTr = document.createElement('tr');
+    totalTr.className = 'total-row';
+    let totalHtml = '<td>📊 月合計</td>';
+    let grandTotal = 0;
+    for (let m = 1; m <= 12; m++) {
+      const mt = AppData.getMonthTotalIncome(incYear, m);
+      grandTotal += mt;
+      totalHtml += `<td><span class="auto-cell" id="inc-month-total-${m}">${mt > 0 ? fmtShort(mt) : '—'}</span></td>`;
+    }
+    totalHtml += `<td><span class="auto-cell income-val" id="inc-grand-total">${grandTotal > 0 ? fmtShort(grandTotal) : '—'}</span></td>`;
+    totalTr.innerHTML = totalHtml;
+    tbody.appendChild(totalTr);
+  }
+
+  function onIncomeChange(inputEl) {
+    const m = parseInt(inputEl.dataset.month);
+    const field = inputEl.dataset.field;
+    const val = parseFloat(inputEl.value) || 0;
+    AppData.setIncome(incYear, m, field, val);
+    updateIncomeTableTotals();
+    refreshIncomeCharts();
+    refreshExpensesTab(); // sync KPI income in Tab 1
+  }
+
+  function updateIncomeTableTotals() {
+    let grandTotal = 0;
+    for (let m = 1; m <= 12; m++) {
+      const mt = AppData.getMonthTotalIncome(incYear, m);
+      grandTotal += mt;
+      const el = document.getElementById(`inc-month-total-${m}`);
+      if (el) el.textContent = mt > 0 ? fmtShort(mt) : '—';
+    }
+    const gtEl = document.getElementById('inc-grand-total');
+    if (gtEl) gtEl.textContent = grandTotal > 0 ? fmtShort(grandTotal) : '—';
+
+    getIncomeFields().forEach(field => {
+      let annualSum = 0;
+      for (let m = 1; m <= 12; m++) annualSum += AppData.getIncome(incYear, m)[field.key] || 0;
+      const el = document.getElementById(`inc-annual-${field.key}`);
+      if (el) el.textContent = annualSum > 0 ? fmtShort(annualSum) : '—';
+    });
+  }
+
+  function refreshIncomeTab() {
+    renderIncomeTable();
+    refreshIncomeCharts();
+  }
+
+  function refreshIncomeCharts() {
+    // Line chart – monthly totals per source
+    const lineCtx = document.getElementById('chart-income-line').getContext('2d');
+    if (chartIncomeLine) chartIncomeLine.destroy();
+
+    const datasets = getIncomeFields().map(field => ({
+      label: field.label,
+      data: Array.from({ length: 12 }, (_, i) => AppData.getIncome(incYear, i + 1)[field.key] || 0),
+      borderColor: field.color,
+      backgroundColor: field.color + '22',
+      tension: 0.4,
+      fill: false,
+      pointRadius: 4,
+      pointHoverRadius: 7,
+      borderWidth: 2.5
+    }));
+
+    chartIncomeLine = new Chart(lineCtx, {
+      type: 'line',
+      data: { labels: MONTH_NAMES, datasets },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { position: 'bottom', labels: { font: { family: 'Noto Sans TC', size: 11 }, boxWidth: 14, padding: 10, usePointStyle: true } },
+          tooltip: { callbacks: { label: (ctx) => ` ${ctx.dataset.label.replace(/^.*? /, '')}: NT$${ctx.raw.toLocaleString('zh-TW')}` } }
+        },
+        scales: {
+          y: {
+            grid: { color: 'rgba(0,0,0,0.05)' },
+            ticks: { callback: (v) => 'NT$' + fmtShort(v), font: { family: 'Noto Sans TC', size: 11 } }
+          },
+          x: { grid: { display: false }, ticks: { font: { family: 'Noto Sans TC', size: 11 } } }
+        }
+      }
+    });
+
+    // Pie chart – annual share per source
+    const pieCtx = document.getElementById('chart-income-pie').getContext('2d');
+    if (chartIncomePie) chartIncomePie.destroy();
+
+    const pieData = getIncomeFields().map(field => {
+      return Array.from({ length: 12 }, (_, i) => AppData.getIncome(incYear, i + 1)[field.key] || 0)
+                  .reduce((s, v) => s + v, 0);
+    });
+    const pieTotal = pieData.reduce((s, v) => s + v, 0);
+
+    if (pieTotal === 0) {
+      chartIncomePie = new Chart(pieCtx, {
+        type: 'doughnut',
+        data: { labels: ['尚無資料'], datasets: [{ data: [1], backgroundColor: ['#e2e8f0'], borderWidth: 0 }] },
+        options: { plugins: { legend: { display: false } }, cutout: '60%', responsive: true, maintainAspectRatio: false }
+      });
+    } else {
+      chartIncomePie = new Chart(pieCtx, {
+        type: 'doughnut',
+        data: {
+          labels: getIncomeFields().map(f => f.label),
+          datasets: [{ data: pieData, backgroundColor: getIncomeFields().map(f => f.color), borderWidth: 2, borderColor: '#fff', hoverOffset: 8 }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          cutout: '55%',
+          plugins: {
+            legend: { position: 'bottom', labels: { font: { family: 'Noto Sans TC', size: 10 }, boxWidth: 12, padding: 6, usePointStyle: true } },
+            tooltip: { callbacks: { label: (ctx) => ` NT$${ctx.raw.toLocaleString('zh-TW')} (${pieTotal > 0 ? ((ctx.raw/pieTotal)*100).toFixed(1) : 0}%)` } }
+          }
+        }
+      });
+    }
+
+    // Annual KPIs
+    const monthlyTotals = Array.from({ length: 12 }, (_, i) => AppData.getMonthTotalIncome(incYear, i + 1));
+    const annual = monthlyTotals.reduce((s, v) => s + v, 0);
+    const nonZeroMonths = monthlyTotals.filter(v => v > 0);
+    const avg = nonZeroMonths.length > 0 ? annual / nonZeroMonths.length : 0;
+    const maxVal = Math.max(...monthlyTotals);
+    const maxIdx = monthlyTotals.indexOf(maxVal);
+
+    document.getElementById('inc-kpi-annual').textContent = annual > 0 ? fmt(annual) : 'NT$0';
+    document.getElementById('inc-kpi-avg').textContent = avg > 0 ? fmt(avg) : 'NT$0';
+    document.getElementById('inc-kpi-best').textContent = maxVal > 0 ? MONTH_NAMES[maxIdx] : '—';
+  }
+
+  // ========================================
+  // 5. TAB 5 — 年度目標追蹤
+  // ========================================
+  let goalsTabInited = false;
+
+  const GOAL_DEFS = [
+    { key: 'saving',  goalField: 'savingGoal',  currentField: 'currentSaving',  autoCalc: false },
+    { key: 'debt',    goalField: 'debtGoal',    currentField: 'currentDebtPaid', autoCalc: false },
+    { key: 'invest',  goalField: 'investGoal',  currentField: 'currentInvest',  autoCalc: false },
+    { key: 'freedom', goalField: 'freedomGoal', currentField: null,             autoCalc: true  },
+  ];
+
+  function refreshGoalsTab() {
+    if (!goalsTabInited) {
+      goalsTabInited = true;
+      fillGoalInputs();
+    }
+    updateGoalCalcs();
+  }
+
+  function fillGoalInputs() {
+    const g = AppData.data.goals || {};
+    document.getElementById('g-saving-goal').value    = g.savingGoal    || '';
+    document.getElementById('g-saving-current').value = g.currentSaving || '';
+    document.getElementById('g-debt-goal').value      = g.debtGoal      || '';
+    document.getElementById('g-debt-current').value   = g.currentDebtPaid || '';
+    document.getElementById('g-invest-goal').value    = g.investGoal    || '';
+    document.getElementById('g-invest-current').value = g.currentInvest || '';
+    document.getElementById('g-freedom-goal').value   = g.freedomGoal   || '';
+  }
+
+  function onGoalChange() {
+    const g = AppData.data.goals || {};
+    g.savingGoal     = parseFloat(document.getElementById('g-saving-goal').value)    || 0;
+    g.currentSaving  = parseFloat(document.getElementById('g-saving-current').value) || 0;
+    g.debtGoal       = parseFloat(document.getElementById('g-debt-goal').value)      || 0;
+    g.currentDebtPaid= parseFloat(document.getElementById('g-debt-current').value)   || 0;
+    g.investGoal     = parseFloat(document.getElementById('g-invest-goal').value)    || 0;
+    g.currentInvest  = parseFloat(document.getElementById('g-invest-current').value) || 0;
+    g.freedomGoal    = parseFloat(document.getElementById('g-freedom-goal').value)   || 0;
+    AppData.data.goals = g;
+    AppData.save();
+    updateGoalCalcs();
+  }
+
+  function updateGoalCalcs() {
+    const g = AppData.data.goals || {};
+
+    // 自動取得淨資產做為財富自由的目前累計
+    const netWorth = getTotalAssets() - getTotalLiabilities();
+    const freedomCurrent = netWorth;
+    document.getElementById('g-freedom-current').value = netWorth > 0 ? Math.round(netWorth) : '';
+
+    // 計算本月平均儲蓄速率（用於預測達成月數）
+    const year = new Date().getFullYear();
+    let totalSavings = 0, countedMonths = 0;
+    for (let m = 1; m <= 12; m++) {
+      const inc = AppData.getMonthTotalIncome(year, m);
+      const exp = AppData.getMonthTotalExpense(year, m);
+      if (inc > 0) { totalSavings += (inc - exp); countedMonths++; }
+    }
+    const monthlySavingsRate = countedMonths > 0 ? totalSavings / countedMonths : 0;
+
+    renderGoalCard('saving',  g.savingGoal||0, g.currentSaving||0, monthlySavingsRate);
+    renderGoalCard('debt',    g.debtGoal||0,   g.currentDebtPaid||0, monthlySavingsRate);
+    renderGoalCard('invest',  g.investGoal||0, g.currentInvest||0,  monthlySavingsRate);
+    renderGoalCard('freedom', g.freedomGoal||0, freedomCurrent,      monthlySavingsRate);
+  }
+
+  function renderGoalCard(key, goal, current, monthlyRate) {
+    const pct     = goal > 0 ? Math.min(current / goal * 100, 100) : 0;
+    const gap     = Math.max(goal - current, 0);
+    const months  = (monthlyRate > 0 && gap > 0) ? Math.ceil(gap / monthlyRate) : null;
+
+    const pctEl   = document.getElementById(`g-${key}-pct`);
+    const barEl   = document.getElementById(`g-${key}-bar`);
+    const gapEl   = document.getElementById(`g-${key}-gap`);
+    const moEl    = document.getElementById(`g-${key}-months`);
+    if (!pctEl) return;
+
+    pctEl.textContent = pct.toFixed(1) + '%';
+    gapEl.textContent = fmt(gap);
+    moEl.textContent  = months ? months + ' 個月' : '—';
+
+    // 進度條寬度（用 requestAnimationFrame 觸發動畫）
+    requestAnimationFrame(() => { barEl.style.width = pct + '%'; });
+
+    // 進度條顏色
+    barEl.className = 'goal-progress-bar' + (pct >= 80 ? ' great' : pct >= 40 ? '' : pct >= 10 ? ' warn' : ' danger');
+  }
+
+  // ========================================
+  // 6. TAB 3 — 資產負債表
+  // ========================================
+  let chartAssetsPie  = null;
+  let chartBalanceBar = null;
+  let balTabInited    = false;
+
+  function fillBalanceInputs() {
+    document.querySelectorAll('#tab-balance .bal-input[data-section]').forEach(input => {
+      const section = input.dataset.section;
+      const field   = input.dataset.field;
+      const mode    = input.dataset.mode || 'personal';
+      // 只填充當前模式的欄位
+      if (mode === currentMode) {
+        const val = (AppData.data[section] && AppData.data[section][field]) || 0;
+        input.value = val > 0 ? val : '';
+      } else {
+        input.value = '';
+      }
+    });
+  }
+
+  function onBalanceFieldChange(input) {
+    const section = input.dataset.section;
+    const field   = input.dataset.field;
+    const val = parseFloat(input.value) || 0;
+    if (!AppData.data[section]) AppData.data[section] = {};
+    AppData.data[section][field] = val;
+    AppData.save();
+    refreshBalanceCalc();
+  }
+
+  function getTotalAssets() {
+    const a = AppData.data.assets || {};
+    if (currentMode === 'company') {
+      return (a.cash||0) + (a.deposit||0) + (a.receivables||0) + (a.inventory||0) + (a.equipment||0) + (a.other||0);
+    } else {
+      return (a.cash||0) + (a.deposit||0) + (a.stocks||0) + (a.property||0) + (a.other||0);
+    }
+  }
+
+  function getTotalLiabilities() {
+    const l = AppData.data.liabilities || {};
+    if (currentMode === 'company') {
+      return (l.payables||0) + (l.shortLoan||0) + (l.longLoan||0) + (l.other||0);
+    } else {
+      return (l.creditCard||0) + (l.mortgage||0) + (l.carLoan||0) + (l.studentLoan||0) + (l.other||0);
+    }
+  }
+
+  function updateBalanceFieldVisibility() {
+    document.querySelectorAll('#tab-balance [data-mode]').forEach(el => {
+      el.style.display = el.dataset.mode === currentMode ? 'flex' : 'none';
+    });
+  }
+
+  function refreshBalanceTab() {
+    if (!balTabInited) {
+      balTabInited = true;
+      updateBalanceFieldVisibility();
+      fillBalanceInputs();
+    }
+    updateBalanceFieldVisibility();
+    fillBalanceInputs();
+    refreshBalanceCalc();
+  }
+
+  function refreshBalanceCalc() {
+    const totalAssets = getTotalAssets();
+    const totalLiab   = getTotalLiabilities();
+    const netWorth    = totalAssets - totalLiab;
+    const debtRatio   = totalAssets > 0 ? (totalLiab / totalAssets * 100) : 0;
+
+    document.getElementById('bal-total-assets').textContent = fmt(totalAssets);
+    document.getElementById('bal-total-liab').textContent   = fmt(totalLiab);
+    document.getElementById('bal-assets-subtotal').textContent = fmt(totalAssets);
+    document.getElementById('bal-liab-subtotal').textContent   = fmt(totalLiab);
+
+    const nwEl = document.getElementById('bal-net-worth');
+    nwEl.textContent = fmt(netWorth);
+    nwEl.className   = 'bal-kpi-value ' + (netWorth >= 0 ? 'positive' : 'warning');
+
+    const drEl = document.getElementById('bal-debt-ratio');
+    drEl.textContent = debtRatio.toFixed(1) + '%';
+    drEl.className   = 'bal-kpi-value ' + (debtRatio > 50 ? 'warning' : debtRatio > 30 ? '' : 'positive');
+
+    refreshBalanceCharts(totalAssets, totalLiab);
+  }
+
+  function refreshBalanceCharts(totalAssets, totalLiab) {
+    const a = AppData.data.assets || {};
+
+    // --- 資產圓餅圖 ---
+    const pieCtx = document.getElementById('chart-assets-pie').getContext('2d');
+    if (chartAssetsPie) chartAssetsPie.destroy();
+
+    const assetLabels = ['現金及活存','定存','股票及基金','房產','其他'];
+    const assetValues = [a.cash||0, a.deposit||0, a.stocks||0, a.property||0, a.other||0];
+    const assetColors = ['#1a3a5c','#2980b9','#27ae60','#f5a623','#95a5a6'];
+
+    if (totalAssets === 0) {
+      chartAssetsPie = new Chart(pieCtx, {
+        type: 'doughnut',
+        data: { labels:['尚無資料'], datasets:[{ data:[1], backgroundColor:['#e2e8f0'], borderWidth:0 }] },
+        options: { plugins:{ legend:{ display:false } }, cutout:'60%', responsive:true, maintainAspectRatio:false }
+      });
+    } else {
+      chartAssetsPie = new Chart(pieCtx, {
+        type: 'doughnut',
+        data: { labels: assetLabels, datasets:[{ data: assetValues, backgroundColor: assetColors, borderWidth:2, borderColor:'#fff', hoverOffset:8 }] },
+        options: {
+          responsive:true, maintainAspectRatio:false, cutout:'55%',
+          plugins: {
+            legend: { position:'bottom', labels:{ font:{ family:'Noto Sans TC', size:11 }, boxWidth:12, padding:6, usePointStyle:true } },
+            tooltip: { callbacks:{ label:(ctx) => ` NT$${ctx.raw.toLocaleString('zh-TW')} (${totalAssets>0?((ctx.raw/totalAssets)*100).toFixed(1):0}%)` } }
+          }
+        }
+      });
+    }
+
+    // --- 資產 vs 負債長條圖 ---
+    const barCtx = document.getElementById('chart-balance-bar').getContext('2d');
+    if (chartBalanceBar) chartBalanceBar.destroy();
+    const net = totalAssets - totalLiab;
+
+    chartBalanceBar = new Chart(barCtx, {
+      type: 'bar',
+      data: {
+        labels: ['總資產','總負債','淨資產'],
+        datasets:[{
+          data: [totalAssets, totalLiab, net],
+          backgroundColor: ['#1a3a5c','#e74c3c', net >= 0 ? '#27ae60' : '#e74c3c'],
+          borderRadius: 8, borderSkipped: false
+        }]
+      },
+      options: {
+        responsive:true, maintainAspectRatio:false,
+        plugins: {
+          legend:{ display:false },
+          tooltip:{ callbacks:{ label:(ctx)=>` NT$${Math.abs(ctx.raw).toLocaleString('zh-TW')}` } }
+        },
+        scales: {
+          y: { grid:{ color:'rgba(0,0,0,0.05)' }, ticks:{ callback:v=>'NT$'+fmtShort(Math.abs(v)), font:{ family:'Noto Sans TC', size:11 } } },
+          x: { grid:{ display:false }, ticks:{ font:{ family:'Noto Sans TC', size:11 } } }
+        }
+      }
+    });
+  }
+
+  // ========================================
+  // 6. TAB 4 — 財務健康儀表板
+  // ========================================
+  let dashGaugeChart   = null;
+  let dashHistoryChart = null;
+
+  // 五大指標定義
+  const INDICATOR_DEFS = [
+    {
+      key:'savings', name:'儲蓄率', std:'≥ 20%',
+      calc() {
+        const y = new Date().getFullYear(), m = new Date().getMonth()+1;
+        const income = AppData.getMonthTotalIncome(y,m);
+        const expense = AppData.getMonthTotalExpense(y,m);
+        if (income === 0) return null;
+        return (income - expense) / income * 100;
+      },
+      fmt:  v => v===null ? '--' : v.toFixed(1)+'%',
+      score: v => v===null ? 0 : v>=20 ? 20 : v>=10 ? 12 : 5,
+      color: v => v===null ? 'gray' : v>=20 ? 'green' : v>=10 ? 'yellow' : 'red',
+      advice:'你的儲蓄率偏低，建議先檢視固定支出，找出可以縮減的項目，目標是每月至少存下收入的 20%。'
+    },
+    {
+      key:'emergency', name:'緊急預備金', std:'≥ 6 個月',
+      calc() {
+        const y = new Date().getFullYear(), m = new Date().getMonth()+1;
+        const cash = AppData.data.assets ? (AppData.data.assets.cash||0) : 0;
+        const monthlyExp = AppData.getMonthTotalExpense(y,m);
+        if (monthlyExp === 0) return null;
+        return cash / monthlyExp;
+      },
+      fmt:  v => v===null ? '--' : v.toFixed(1)+' 個月',
+      score: v => v===null ? 0 : v>=6 ? 20 : v>=3 ? 12 : 5,
+      color: v => v===null ? 'gray' : v>=6 ? 'green' : v>=3 ? 'yellow' : 'red',
+      advice:'你的緊急預備金不足 3 個月，建議優先建立至少 6 個月生活費的緊急預備金，再考慮其他投資。'
+    },
+    {
+      key:'fixed', name:'固定支出比', std:'≤ 50%',
+      calc() {
+        const y = new Date().getFullYear(), m = new Date().getMonth()+1;
+        const income = AppData.getMonthTotalIncome(y,m);
+        const expenses = AppData.getExpenses(y,m);
+        const fixedTotal = expenses.filter(e=>e.isFixed).reduce((s,e)=>s+e.amount,0);
+        if (income === 0) return null;
+        return fixedTotal / income * 100;
+      },
+      fmt:  v => v===null ? '--' : v.toFixed(1)+'%',
+      score: v => v===null ? 0 : v<=50 ? 20 : v<=70 ? 12 : 5,
+      color: v => v===null ? 'gray' : v<=50 ? 'green' : v<=70 ? 'yellow' : 'red',
+      advice:'你的固定支出佔收入超過 70%，財務彈性很低。建議重新檢視訂閱服務、保險、貸款等固定支出，嘗試降低至 50% 以下。'
+    },
+    {
+      key:'debt', name:'負債比', std:'≤ 30%',
+      calc() {
+        const ta = getTotalAssets(), tl = getTotalLiabilities();
+        if (ta === 0) return null;
+        return tl / ta * 100;
+      },
+      fmt:  v => v===null ? '--' : v.toFixed(1)+'%',
+      score: v => v===null ? 0 : v<=30 ? 20 : v<=50 ? 12 : 5,
+      color: v => v===null ? 'gray' : v<=30 ? 'green' : v<=50 ? 'yellow' : 'red',
+      advice:'你的負債比超過 50%，建議優先償還高利率負債（如信用卡），並暫緩新增貸款。'
+    },
+    {
+      key:'freedom', name:'財富自由進度', std:'≥ 80%',
+      calc() {
+        const net = getTotalAssets() - getTotalLiabilities();
+        const goal = AppData.data.goals ? (AppData.data.goals.freedomGoal||0) : 0;
+        if (goal === 0) return null;
+        return Math.min(net / goal * 100, 100);
+      },
+      fmt:  v => v===null ? '--' : v.toFixed(1)+'%',
+      score: v => v===null ? 0 : v>=80 ? 20 : v>=40 ? 12 : 5,
+      color: v => v===null ? 'gray' : v>=80 ? 'green' : v>=40 ? 'yellow' : 'red',
+      advice:'距離財富自由目標還有很長的路，建議同時提高儲蓄率和投資報酬率，加速資產累積。'
+    }
+  ];
+
+  const INDICATOR_DEFS_COMPANY = [
+    {
+      key:'grossMargin', name:'毛利率', std:'≥ 30%',
+      calc() {
+        const y = new Date().getFullYear(), m = new Date().getMonth()+1;
+        const revenue = AppData.getMonthTotalIncome(y,m);
+        const expenses = AppData.getExpenses(y,m);
+        const cogs = expenses.filter(e => e.category === '原料進貨').reduce((s,e)=>s+e.amount,0);
+        if (revenue === 0) return null;
+        return (revenue - cogs) / revenue * 100;
+      },
+      fmt:  v => v===null ? '--' : v.toFixed(1)+'%',
+      score: v => v===null ? 0 : v>=30 ? 20 : v>=15 ? 12 : 5,
+      color: v => v===null ? 'gray' : v>=30 ? 'green' : v>=15 ? 'yellow' : 'red',
+      advice:'毛利率偏低，建議檢視原料/進貨成本，或調整產品定價策略，目標維持毛利率 30% 以上。'
+    },
+    {
+      key:'opexRatio', name:'營業費用率', std:'≤ 50%',
+      calc() {
+        const y = new Date().getFullYear(), m = new Date().getMonth()+1;
+        const revenue = AppData.getMonthTotalIncome(y,m);
+        const expenses = AppData.getExpenses(y,m);
+        const opex = expenses.filter(e => e.category !== '原料進貨').reduce((s,e)=>s+e.amount,0);
+        if (revenue === 0) return null;
+        return opex / revenue * 100;
+      },
+      fmt:  v => v===null ? '--' : v.toFixed(1)+'%',
+      score: v => v===null ? 0 : v<=50 ? 20 : v<=70 ? 12 : 5,
+      color: v => v===null ? 'gray' : v<=50 ? 'green' : v<=70 ? 'yellow' : 'red',
+      advice:'營業費用偏高，建議檢視薪資、租金、行銷等固定成本，嘗試提升收入或削減不必要支出。'
+    },
+    {
+      key:'currentRatio', name:'流動比率', std:'≥ 2.0',
+      calc() {
+        const a = AppData.data.assets || {};
+        const l = AppData.data.liabilities || {};
+        const currentAssets = (a.cash||0) + (a.deposit||0) + (a.receivables||0) + (a.inventory||0);
+        const currentLiab   = (l.payables||0) + (l.shortLoan||0);
+        if (currentLiab === 0) return null;
+        return currentAssets / currentLiab;
+      },
+      fmt:  v => v===null ? '--' : v.toFixed(2),
+      score: v => v===null ? 0 : v>=2 ? 20 : v>=1 ? 12 : 5,
+      color: v => v===null ? 'gray' : v>=2 ? 'green' : v>=1 ? 'yellow' : 'red',
+      advice:'流動比率低於 1，短期償債能力不足。建議加速應收帳款回收，或減少短期負債。'
+    },
+    {
+      key:'debtRatio', name:'負債比率', std:'≤ 40%',
+      calc() {
+        const ta = getTotalAssets(), tl = getTotalLiabilities();
+        if (ta === 0) return null;
+        return tl / ta * 100;
+      },
+      fmt:  v => v===null ? '--' : v.toFixed(1)+'%',
+      score: v => v===null ? 0 : v<=40 ? 20 : v<=60 ? 12 : 5,
+      color: v => v===null ? 'gray' : v<=40 ? 'green' : v<=60 ? 'yellow' : 'red',
+      advice:'負債比率過高，財務風險偏大。建議優先償還高利率負債，並控制新增借款。'
+    },
+    {
+      key:'cashReserve', name:'現金儲備月數', std:'≥ 3 個月',
+      calc() {
+        const y = new Date().getFullYear(), m = new Date().getMonth()+1;
+        const cash = AppData.data.assets ? (AppData.data.assets.cash||0) : 0;
+        const monthlyExp = AppData.getMonthTotalExpense(y,m);
+        if (monthlyExp === 0) return null;
+        return cash / monthlyExp;
+      },
+      fmt:  v => v===null ? '--' : v.toFixed(1)+' 個月',
+      score: v => v===null ? 0 : v>=3 ? 20 : v>=1 ? 12 : 5,
+      color: v => v===null ? 'gray' : v>=3 ? 'green' : v>=1 ? 'yellow' : 'red',
+      advice:'現金儲備不足 1 個月，現金流風險極高。建議立即建立至少 3 個月的現金緩衝。'
+    }
+  ];
+
+  function getIndicatorDefs() {
+    return currentMode === 'company' ? INDICATOR_DEFS_COMPANY : INDICATOR_DEFS;
+  }
+
+  function refreshDashboardTab() {
+    renderDashboard();
+  }
+
+  function renderDashboard() {
+    // 計算各指標
+    const results = getIndicatorDefs().map(ind => {
+      const val = ind.calc();
+      return { ...ind, value: val, formatted: ind.fmt(val), score: ind.score(val), colorClass: ind.color(val) };
+    });
+    const totalScore = results.reduce((s,r) => s + r.score, 0);
+
+    // 總分動畫
+    animateCountUp('dash-score-num', totalScore);
+
+    // 等級文字
+    let grade, desc;
+    if (totalScore >= 90)      { grade='🟢 優秀';    desc='你的財務非常健康！繼續保持這個好習慣。'; }
+    else if (totalScore >= 75) { grade='🔵 良好';    desc='財務狀況不錯，還有一些進步空間。'; }
+    else if (totalScore >= 60) { grade='🟡 尚可';    desc='有些地方需要注意，請參考下方改善建議。'; }
+    else if (totalScore > 0)   { grade='🔴 需改善';  desc='你的財務需要立即關注！請優先處理紅燈指標。'; }
+    else                       { grade='財務健康評分'; desc='請先在各頁面填入財務數據，儀表板將自動計算你的健康分數。'; }
+
+    document.getElementById('dash-score-grade').textContent = grade;
+    document.getElementById('dash-score-desc').textContent  = desc;
+
+    // Gauge 半圓圖
+    drawGauge(totalScore);
+
+    // 五大指標卡片
+    const indContainer = document.getElementById('dash-indicators');
+    indContainer.innerHTML = results.map(r => `
+      <div class="ind-card ${r.colorClass}">
+        <div class="ind-dot ${r.colorClass}"></div>
+        <div class="ind-name">${r.name}</div>
+        <div class="ind-value">${r.formatted}</div>
+        <div class="ind-std">建議：${r.std}</div>
+        <span class="ind-score-badge ${r.colorClass}">${r.score} / 20 分</span>
+      </div>
+    `).join('');
+
+    // 示警與建議
+    const redItems = results.filter(r => r.colorClass === 'red');
+    const warnContainer = document.getElementById('dash-warnings');
+    if (totalScore === 0) {
+      warnContainer.innerHTML = `<div class="all-good-box"><span style="font-size:28px;">📋</span><span>請先在各頁面填入數據，即可查看財務健康狀況與改善建議。</span></div>`;
+    } else if (redItems.length === 0) {
+      warnContainer.innerHTML = `<div class="all-good-box"><span style="font-size:28px;">✅</span><span>所有指標都在健康範圍內，你的財務管理非常棒！繼續保持。</span></div>`;
+    } else {
+      warnContainer.innerHTML = redItems.map(r => `
+        <div class="warn-box">
+          <div class="warn-title">⚠️ ${r.name}需要改善（目前：${r.formatted}，建議：${r.std}）</div>
+          <div class="warn-desc">${r.advice}</div>
+        </div>
+      `).join('');
+    }
+
+    // 歷史記錄
+    renderHistory();
+  }
+
+  function drawGauge(score) {
+    const ctx = document.getElementById('gauge-chart').getContext('2d');
+    if (dashGaugeChart) dashGaugeChart.destroy();
+    const color = score >= 75 ? '#27ae60' : score >= 60 ? '#f1c40f' : score > 0 ? '#e74c3c' : '#94a3b8';
+    dashGaugeChart = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        datasets: [{
+          data: [score, 100 - score],
+          backgroundColor: [color, 'rgba(255,255,255,0.15)'],
+          borderWidth: 0,
+          hoverBackgroundColor: [color, 'rgba(255,255,255,0.15)']
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        cutout: '70%', circumference: 180, rotation: -90,
+        plugins: { legend:{ display:false }, tooltip:{ enabled:false } },
+        animation: { animateRotate:true, duration:1200 }
+      }
+    });
+  }
+
+  // ========================================
+  // 7. 資料管理：匯出 / 匯入 / 清除 / Toast
+  // ========================================
+  function showToast(msg, duration = 2800) {
+    const el = document.getElementById('app-toast');
+    if (!el) return;
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(el._timer);
+    el._timer = setTimeout(() => el.classList.remove('show'), duration);
+  }
+
+  function exportData() {
+    try {
+      const json    = JSON.stringify(AppData.data, null, 2);
+      const blob    = new Blob([json], { type: 'application/json' });
+      const url     = URL.createObjectURL(blob);
+      const now     = new Date();
+      const fname   = `財務體檢備份_${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}.json`;
+      const a       = document.createElement('a');
+      a.href        = url;
+      a.download    = fname;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('📤 數據已匯出！請妥善保存備份檔案。');
+    } catch (e) {
+      showToast('⚠️ 匯出失敗，請稍後再試。');
+    }
+  }
+
+  function handleImportFile(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const parsed = JSON.parse(e.target.result);
+        if (!parsed.income || !parsed.expenses) throw new Error('格式不正確');
+        AppData.data = parsed;
+        AppData.save();
+        // 重置各 Tab 初始化狀態，強制重新載入
+        balTabInited    = false;
+        goalsTabInited  = false;
+        // 重新整理目前顯示的 Tab
+        const activeTab = document.querySelector('.tab-panel.active');
+        if (activeTab) {
+          if (activeTab.id === 'tab-expenses')  refreshExpensesTab();
+          if (activeTab.id === 'tab-income')    refreshIncomeTab();
+          if (activeTab.id === 'tab-balance')   refreshBalanceTab();
+          if (activeTab.id === 'tab-dashboard') refreshDashboardTab();
+          if (activeTab.id === 'tab-goals')     refreshGoalsTab();
+          if (activeTab.id === 'tab-cashflow')  refreshCashFlowTab();
+        }
+        showToast('📥 數據還原成功！所有記錄已載入。');
+      } catch (err) {
+        showToast('⚠️ 匯入失敗：檔案格式不正確或已損壞。');
+      }
+      event.target.value = '';
+    };
+    reader.readAsText(file);
+  }
+
+  function clearAllData() {
+    if (!confirm('確定要清除所有財務數據嗎？\n\n建議先點「匯出」保存數據，此操作無法復原。')) return;
+    if (!confirm('再次確認：將永久清除所有收支記錄、資產負債、年度目標與歷史記錄。')) return;
+    localStorage.removeItem(getStorageKey());
+    AppData.data    = defaultAppData();
+    balTabInited    = false;
+    goalsTabInited  = false;
+    // 切回第一個 Tab 並重新初始化
+    document.querySelectorAll('.tab-btn').forEach((b,i) => b.classList.toggle('active', i===0));
+    document.querySelectorAll('.tab-panel').forEach((p,i) => p.classList.toggle('active', i===0));
+    initExpensesTab();
+    showToast('🗑️ 所有數據已清除。');
+  }
+
+  function animateCountUp(elId, target) {
+    const el = document.getElementById(elId);
+    if (!el) return;
+    let current = 0;
+    const steps = 40;
+    const interval = 1000 / steps;
+    const increment = target / steps;
+    const timer = setInterval(() => {
+      current = Math.min(current + increment, target);
+      el.textContent = Math.round(current);
+      if (current >= target) clearInterval(timer);
+    }, interval);
+  }
+
+  function saveMonthlyCheck(btn) {
+    const results = getIndicatorDefs().map(ind => {
+      const val = ind.calc();
+      return { key: ind.key, score: ind.score(val) };
+    });
+    const totalScore = results.reduce((s,r) => s + r.score, 0);
+    const now = new Date();
+    const dateStr = `${now.getFullYear()}/${String(now.getMonth()+1).padStart(2,'0')}/${String(now.getDate()).padStart(2,'0')}`;
+
+    if (!AppData.data.history) AppData.data.history = [];
+    AppData.data.history.push({
+      date: dateStr,
+      totalScore,
+      scores: Object.fromEntries(results.map(r => [r.key, r.score]))
+    });
+    AppData.save();
+    renderHistory();
+
+    const orig = btn.textContent;
+    btn.textContent = '✅ 已儲存！';
+    btn.disabled = true;
+    setTimeout(() => { btn.textContent = orig; btn.disabled = false; }, 2000);
+  }
+
+  function renderHistory() {
+    const history = AppData.data.history || [];
+    const tbody = document.getElementById('history-tbody');
+    if (!tbody) return;
+
+    if (history.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="7" class="history-empty">尚無歷史記錄——點擊「儲存本月體檢結果」開始追蹤進步幅度</td></tr>`;
+    } else {
+      tbody.innerHTML = history.slice().reverse().map(h => {
+        const c = h.totalScore >= 75 ? 'var(--green)' : h.totalScore >= 60 ? '#d4a017' : 'var(--red)';
+        return `<tr>
+          <td>${h.date}</td>
+          <td><strong style="color:${c};font-size:15px;">${h.totalScore}</strong></td>
+          <td>${h.scores.savings  ||0}/20</td>
+          <td>${h.scores.emergency||0}/20</td>
+          <td>${h.scores.fixed    ||0}/20</td>
+          <td>${h.scores.debt     ||0}/20</td>
+          <td>${h.scores.freedom  ||0}/20</td>
+        </tr>`;
+      }).join('');
+    }
+
+    // 趨勢折線圖
+    const histCtx = document.getElementById('chart-history-line').getContext('2d');
+    if (dashHistoryChart) dashHistoryChart.destroy();
+
+    if (history.length === 0) {
+      dashHistoryChart = new Chart(histCtx, {
+        type: 'line',
+        data: { labels:[''], datasets:[{ data:[null], borderColor:'#f5a623', borderWidth:2 }] },
+        options: { plugins:{ legend:{ display:false } }, scales:{ y:{ min:0, max:100 }, x:{} }, responsive:true, maintainAspectRatio:false }
+      });
+      return;
+    }
+
+    dashHistoryChart = new Chart(histCtx, {
+      type: 'line',
+      data: {
+        labels: history.map(h => h.date),
+        datasets: [{
+          label: '財務健康總分',
+          data: history.map(h => h.totalScore),
+          borderColor: '#f5a623', backgroundColor: 'rgba(245,166,35,.15)',
+          tension: 0.4, fill: true, pointRadius: 5, pointHoverRadius: 8, borderWidth: 2.5
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { position:'bottom', labels:{ font:{ family:'Noto Sans TC', size:11 }, boxWidth:12 } },
+          tooltip: { callbacks:{ label:(ctx)=>` 分數：${ctx.raw} 分` } }
+        },
+        scales: {
+          y: { min:0, max:100, grid:{ color:'rgba(0,0,0,0.05)' }, ticks:{ font:{ family:'Noto Sans TC', size:11 } } },
+          x: { grid:{ display:false }, ticks:{ font:{ family:'Noto Sans TC', size:11 }, maxRotation:45 } }
+        }
+      }
+    });
+  }
+
+  // ============================================================
+  // TAB 6 — 現金流預測與預警（最重要！）
+  // ============================================================
+  let chartCashFlow = null;
+
+  /**
+   * 從歷史資料計算月均收入與支出
+   * lookback: 最多往回幾個月
+   */
+  function getMonthlyAverages(lookback = 3) {
+    const today = new Date();
+    const thisYear = today.getFullYear();
+    const thisMonth = today.getMonth() + 1;
+
+    let totalIncome = 0, totalExpense = 0, validMonths = 0;
+
+    for (let i = 0; i < lookback; i++) {
+      let m = thisMonth - i;
+      let y = thisYear;
+      if (m <= 0) { m += 12; y -= 1; }
+
+      // 收入
+      const incData = AppData.data.income?.[y]?.[m] || {};
+      const monthIncome = Object.values(incData).reduce((s, v) => s + (Number(v) || 0), 0);
+
+      // 支出
+      const expList = AppData.data.expenses?.[y]?.[m] || [];
+      const monthExpense = expList.reduce((s, e) => s + (Number(e.amount) || 0), 0);
+
+      if (monthIncome > 0 || monthExpense > 0) {
+        totalIncome  += monthIncome;
+        totalExpense += monthExpense;
+        validMonths++;
+      }
+    }
+
+    if (validMonths === 0) return null;
+    return {
+      avgIncome:  totalIncome  / validMonths,
+      avgExpense: totalExpense / validMonths,
+      validMonths
+    };
+  }
+
+  /** 取得目前可用現金（現金 + 存款） */
+  function getStartingCash() {
+    const a = AppData.data.assets || {};
+    return (Number(a.cash) || 0) + (Number(a.deposit) || 0);
+  }
+
+  /** 產生12個月預測資料 */
+  function forecastCashFlow() {
+    const avgs = getMonthlyAverages(3);
+    if (!avgs) return null;
+
+    const { avgIncome, avgExpense, validMonths } = avgs;
+    const startingCash = getStartingCash();
+    const today = new Date();
+    let baseYear = today.getFullYear();
+    let baseMonth = today.getMonth() + 1; // 從下個月開始預測
+    baseMonth++;
+    if (baseMonth > 12) { baseMonth = 1; baseYear++; }
+
+    const forecast = [];
+    let running = startingCash;
+
+    for (let i = 0; i < 12; i++) {
+      let m = baseMonth + i;
+      let y = baseYear;
+      while (m > 12) { m -= 12; y++; }
+      const net = avgIncome - avgExpense;
+      running += net;
+      forecast.push({
+        label: `${y}/${String(m).padStart(2, '0')}`,
+        income:  Math.round(avgIncome),
+        expense: Math.round(avgExpense),
+        net:     Math.round(net),
+        balance: Math.round(running)
+      });
+    }
+
+    return { forecast, avgIncome, avgExpense, startingCash, validMonths };
+  }
+
+  /** 判斷現金流預警等級 */
+  function getCashWarningLevel(result) {
+    if (!result) return 'nodata';
+    const { forecast, startingCash, avgIncome, avgExpense } = result;
+    const firstNegIdx = forecast.findIndex(m => m.balance <= 0);
+    const burnRate = avgExpense - avgIncome; // 每月消耗量（若正代表入不敷出）
+    const runway = burnRate > 0 ? startingCash / burnRate : 999;
+
+    if (firstNegIdx !== -1 && firstNegIdx < 6) return 'red';
+    if (firstNegIdx !== -1 || runway < 3) return 'red';
+    if (runway < 6 || (firstNegIdx !== -1 && firstNegIdx < 12)) return 'yellow';
+    return 'green';
+  }
+
+  /** 計算現金可撐月數 */
+  function getCashRunwayMonths(result) {
+    if (!result) return 0;
+    const { avgIncome, avgExpense, startingCash } = result;
+    if (avgIncome >= avgExpense) return 999; // 正向現金流，不會耗盡
+    const burnRate = avgExpense - avgIncome;
+    return burnRate > 0 ? Math.floor(startingCash / burnRate) : 999;
+  }
+
+  /** 根據等級與模式產生行動建議 */
+  function getCashFlowSolutions(level) {
+    const isCompany = currentMode === 'company';
+
+    if (level === 'nodata') {
+      return [{ type: 'safe', title: '📊 開始輸入資料', text: '請先在「收支記錄」和「收入追蹤」Tab 輸入至少1個月的資料，系統即可自動產生現金流預測與行動建議。' }];
+    }
+
+    if (level === 'red') {
+      return isCompany ? [
+        { type: 'urgent', title: '🚨 緊急融資行動', text: '立即聯繫銀行申請「企業信用額度（LOC）」或「應收帳款融資（Invoice Financing）」，通常可在2週內取得資金，優先保住公司日常運作。' },
+        { type: 'urgent', title: '💸 加速應收帳款回收', text: '主動聯繫客戶提前付款，可提供1〜2%早付折扣，優先催收金額最大的應收帳款。目標：本月內回收50%以上。' },
+        { type: 'urgent', title: '📦 即時銷售庫存回現', text: '以5〜8折優惠快速清庫存，將滯銷商品轉為現金，改善短期流動性。可優先使用社群媒體進行快閃促銷。' },
+        { type: 'warning', title: '✂️ 立即削減非核心支出', text: '暫停所有非必要採購、行銷投入降至最低維持，評估是否可延緩員工招募或設備汰換計畫。' },
+        { type: 'warning', title: '🤝 協商延緩應付款', text: '主動與主要供應商協商延長帳期30〜60天，為企業爭取現金周轉空間，維持良好合作關係。' }
+      ] : [
+        { type: 'urgent', title: '🚨 立即申請個人信貸', text: '向銀行申請個人信用貸款或理財型房貸（如已有不動產），通常1〜2週內可撥款，用於補充緊急現金缺口，避免斷鏈。' },
+        { type: 'urgent', title: '💼 緊急增加收入來源', text: '立即接洽副業案件，優先選擇付款快的案子（接案設計、外送、網路兼職），目標在1個月內增加NT$5,000〜20,000現金流。' },
+        { type: 'urgent', title: '🛍️ 出售閒置資產', text: '盤點可出售的閒置物品（二手家電、3C、衣物），透過蝦皮、Facebook二手社團快速變現，每件物品定價快售優先。' },
+        { type: 'warning', title: '✂️ 緊急削減支出', text: '立即取消所有非必要訂閱（串流平台、健身房等）、暫停娛樂消費、減少外食改為自炊，目標單月節省NT$3,000以上。' },
+        { type: 'warning', title: '🔄 善用信用卡免息期', text: '短期內善用信用卡最長56天的免息期延緩現金付出，但務必在帳單截止日前還清，避免高達15〜19%的循環利息。' }
+      ];
+    }
+
+    if (level === 'yellow') {
+      return isCompany ? [
+        { type: 'warning', title: '⚠️ 建立企業現金緩衝', text: '目標維持3〜6個月的固定支出作為企業現金儲備，建議將超額利潤存入高利活存或短期定存，不要讓現金閒置。' },
+        { type: 'warning', title: '📈 優化應收帳款管理', text: '評估是否縮短帳期（從60天改為30天），增加預收款比例，或導入線上付款系統縮短收款時間。' },
+        { type: 'warning', title: '💡 開發穩定現金流來源', text: '評估推出月費制/訂閱制服務、開發新客群、增加服務品項，讓每月現金流入更穩定可預期。' },
+        { type: 'safe', title: '📊 趁好時機申請備用額度', text: '趁財務狀況尚可時向銀行申請企業信用額度（但不動用），作為緊急備用資金，危機時利率條件會比臨時申請好很多。' }
+      ] : [
+        { type: 'warning', title: '⚠️ 建立緊急預備金', text: '目標建立至少3〜6個月生活費的緊急預備金（建議NT$15〜30萬），存放於高利活存帳戶，如台新Richart、王道銀行等，年利率可達1〜2%。' },
+        { type: 'warning', title: '📈 開始投資建立被動收入', text: '評估低風險投資工具（台股高股息ETF如0056、00878），每月定期定額NT$3,000〜5,000，長期建立被動現金流，讓複利為你工作。' },
+        { type: 'warning', title: '💡 發展副業增加收入', text: '利用現有技能接線上案件（104外包、Freelancer.com），或銷售數位產品/線上課程，目標每月增加NT$3,000〜10,000副業收入。' },
+        { type: 'safe', title: '🔍 重新審視每月固定支出', text: '列出所有固定支出清單，找出可削減或降級的項目（保險、訂閱服務），每月節省5〜10%支出，累計效益相當可觀。' }
+      ];
+    }
+
+    // Green
+    return isCompany ? [
+      { type: 'safe', title: '✅ 企業現金流健康', text: '恭喜！企業現金流充裕，可考慮將多餘現金配置到短期投資、提前償還高利率負債，或加速擴張計畫，把資本效率最大化。' },
+      { type: 'safe', title: '📈 進攻型成長策略', text: '現金充足時是擴張的好時機，可增加行銷投入、拓展新客群、開發新產品線，把握景氣好時積極成長。' },
+      { type: 'safe', title: '🛡️ 建立財務護城河', text: '建議維持6個月固定支出的現金緩衝，並為下一個景氣循環建立財務韌性，確保企業能度過任何黑天鵝事件。' }
+    ] : [
+      { type: 'safe', title: '✅ 個人財務狀況良好', text: '太棒了！你的現金流持續正向，繼續保持！可考慮提高投資比例（目標薪資的20〜30%），讓資產加速成長。' },
+      { type: 'safe', title: '📈 提升投資配置', text: '現金充裕時可配置到指數型ETF（VOO、QQQ或0050）、不動產或其他資產，透過多元配置分散風險並累積財富。' },
+      { type: 'safe', title: '🎯 設定財務自由里程碑', text: '可設定「財務自由」具體目標（如存到年支出的25倍），並利用「年度目標」Tab 追蹤進度，把財務自由的時間軸視覺化。' }
+    ];
+  }
+
+  /** 更新現金流 Tab 全部內容 */
+  function refreshCashFlowTab() {
+    const result = forecastCashFlow();
+    const level  = getCashWarningLevel(result);
+    const runway = getCashRunwayMonths(result);
+
+    // 沒有資料
+    if (!result) {
+      const banner = document.getElementById('cf-warning-banner');
+      banner.className = 'cf-warning-banner yellow';
+      banner.innerHTML = '⚠️ <strong>資料不足：</strong>請先在「收支記錄」和「收入追蹤」Tab 輸入至少1個月的資料，系統即可自動產生現金流預測。';
+      const startCash = getStartingCash();
+      document.getElementById('cf-current-cash').textContent = 'NT$ ' + fmtNum(startCash);
+      document.getElementById('cf-avg-net').textContent = '—';
+      document.getElementById('cf-runway').textContent = '—';
+      document.getElementById('cf-crisis-month').textContent = '資料不足';
+      document.getElementById('cf-table-body').innerHTML = '<tr><td colspan="6" class="cf-no-data">請先輸入收支資料以產生預測</td></tr>';
+      renderCashFlowSolutions('nodata');
+      return;
+    }
+
+    const { forecast, avgIncome, avgExpense, startingCash, validMonths } = result;
+    const firstNegIdx = forecast.findIndex(m => m.balance <= 0);
+    const avgNet = avgIncome - avgExpense;
+
+    // 預警橫幅
+    const banner = document.getElementById('cf-warning-banner');
+    banner.classList.remove('hidden');
+    if (level === 'red') {
+      const negLabel = firstNegIdx >= 0 ? forecast[firstNegIdx].label : '近期';
+      banner.className = 'cf-warning-banner red';
+      banner.innerHTML = `🚨 <strong>現金流危機預警！</strong>預測顯示 ${negLabel} 前後現金餘額將轉為負數，請立即參考下方行動方案採取緊急措施。`;
+    } else if (level === 'yellow') {
+      const runText = runway < 999 ? `約 ${runway} 個月` : '超過12個月';
+      banner.className = 'cf-warning-banner yellow';
+      banner.innerHTML = `⚠️ <strong>現金流需要注意。</strong>目前現金可撐 ${runText}，月均淨現金流為 ${avgNet >= 0 ? '+' : ''}NT$${fmtNum(Math.abs(avgNet))}，建議盡早規劃改善措施。`;
+    } else {
+      banner.className = 'cf-warning-banner green';
+      banner.innerHTML = `✅ <strong>現金流狀況良好！</strong>預測未來12個月均維持正向現金流，每月平均淨流入 NT$${fmtNum(avgNet)}，繼續保持優秀的財務習慣。`;
+    }
+
+    // 摘要卡片
+    const cashEl = document.getElementById('cf-current-cash');
+    cashEl.textContent = 'NT$ ' + fmtNum(startingCash);
+    cashEl.className = 'cf-value';
+
+    const netEl = document.getElementById('cf-avg-net');
+    netEl.textContent = (avgNet >= 0 ? '+' : '−') + 'NT$ ' + fmtNum(Math.abs(Math.round(avgNet)));
+    netEl.className = `cf-value ${avgNet >= 0 ? 'cf-pos' : 'cf-neg'}`;
+    document.getElementById('cf-card-net').className = `cf-summary-card ${avgNet >= 0 ? 'cf-card-green' : 'cf-card-red'}`;
+
+    const runwayEl = document.getElementById('cf-runway');
+    if (runway >= 999) {
+      runwayEl.textContent = '12個月以上';
+      runwayEl.className = 'cf-value cf-pos';
+      document.getElementById('cf-card-runway').className = 'cf-summary-card cf-card-green';
+    } else {
+      runwayEl.textContent = runway + ' 個月';
+      const color = runway < 3 ? 'cf-card-red' : runway < 6 ? 'cf-card-yellow' : 'cf-card-green';
+      runwayEl.className = `cf-value ${runway < 3 ? 'cf-neg' : runway < 6 ? '' : 'cf-pos'}`;
+      document.getElementById('cf-card-runway').className = `cf-summary-card ${color}`;
+    }
+
+    const crisisEl = document.getElementById('cf-crisis-month');
+    const crisisCard = document.getElementById('cf-crisis-card');
+    if (firstNegIdx >= 0) {
+      crisisEl.textContent = forecast[firstNegIdx].label;
+      crisisEl.className = 'cf-value cf-neg';
+      crisisCard.className = 'cf-summary-card cf-card-red';
+    } else {
+      crisisEl.textContent = '無危機風險 ✓';
+      crisisEl.className = 'cf-value cf-pos';
+      crisisCard.className = 'cf-summary-card cf-card-green';
+    }
+
+    // 圖表
+    renderCashFlowChart(forecast, startingCash);
+
+    // 逐月明細表
+    const tbody = document.getElementById('cf-table-body');
+    const safeThreshold = startingCash * 0.25;
+    tbody.innerHTML = forecast.map(m => {
+      const rowClass = m.balance <= 0 ? 'cf-row-danger' : m.balance < safeThreshold ? 'cf-row-warn' : '';
+      const dotClass = m.balance <= 0 ? 'red' : m.balance < safeThreshold ? 'yellow' : 'green';
+      const statusText = m.balance <= 0 ? '危險' : m.balance < safeThreshold ? '注意' : '正常';
+      const netSign = m.net >= 0 ? '+' : '−';
+      const netColor = m.net >= 0 ? '#196f3d' : '#c0392b';
+      const balColor = m.balance >= 0 ? '#1a3a5c' : '#c0392b';
+      return `<tr class="${rowClass}">
+        <td>${m.label}</td>
+        <td>NT$${fmtNum(m.income)}</td>
+        <td>NT$${fmtNum(m.expense)}</td>
+        <td style="color:${netColor};font-weight:700;">${netSign}NT$${fmtNum(Math.abs(m.net))}</td>
+        <td style="color:${balColor};font-weight:700;">NT$${fmtNum(m.balance)}</td>
+        <td><span class="cf-dot ${dotClass}"></span>${statusText}</td>
+      </tr>`;
+    }).join('');
+
+    // 解決方案
+    renderCashFlowSolutions(level);
+
+    // 說明文字
+    document.getElementById('cf-assumptions-text').textContent =
+      `預測基於過去 ${validMonths} 個月的收支資料平均值（月均收入：NT$${fmtNum(Math.round(avgIncome))}，月均支出：NT$${fmtNum(Math.round(avgExpense))}，月均淨現金流：${avgNet >= 0 ? '+' : ''}NT$${fmtNum(Math.round(avgNet))}）。實際結果可能因季節性、一次性收支或市場變化而不同，建議每月更新資料以提高預測準確度。`;
+  }
+
+  /** 繪製現金流組合圖（收支柱狀 + 餘額折線） */
+  function renderCashFlowChart(forecast, startingCash) {
+    const ctx = document.getElementById('chart-cashflow');
+    if (!ctx) return;
+    if (chartCashFlow) { chartCashFlow.destroy(); chartCashFlow = null; }
+
+    // 加入「當前」資料點作為起點
+    const labels   = forecast.map(m => m.label);
+    const incomes  = forecast.map(m => m.income);
+    const expenses = forecast.map(m => m.expense);
+    const balances = forecast.map(m => m.balance);
+
+    // 使用顏色陣列讓餘額轉負時變紅
+    const balColors = balances.map(b => b >= 0 ? 'rgba(245,166,35,0.85)' : 'rgba(231,76,60,0.85)');
+    const balBorderColors = balances.map(b => b >= 0 ? '#f5a623' : '#e74c3c');
+
+    chartCashFlow = new Chart(ctx, {
+      data: {
+        labels,
+        datasets: [
+          {
+            type: 'bar',
+            label: '預測收入',
+            data: incomes,
+            backgroundColor: 'rgba(39,174,96,0.75)',
+            borderColor: '#27ae60',
+            borderWidth: 1.5,
+            borderRadius: 5,
+            order: 2,
+            yAxisID: 'y'
+          },
+          {
+            type: 'bar',
+            label: '預測支出',
+            data: expenses,
+            backgroundColor: 'rgba(231,76,60,0.72)',
+            borderColor: '#e74c3c',
+            borderWidth: 1.5,
+            borderRadius: 5,
+            order: 2,
+            yAxisID: 'y'
+          },
+          {
+            type: 'line',
+            label: '累計現金餘額',
+            data: balances,
+            borderColor: balBorderColors,
+            segment: {
+              borderColor: ctx => balances[ctx.p1DataIndex] >= 0 ? '#f5a623' : '#e74c3c'
+            },
+            backgroundColor: 'rgba(245,166,35,0.07)',
+            borderWidth: 2.8,
+            tension: 0.35,
+            fill: true,
+            pointRadius: 5,
+            pointBackgroundColor: balColors,
+            pointHoverRadius: 8,
+            order: 1,
+            yAxisID: 'y2'
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: { font: { family: 'Noto Sans TC', size: 11 }, boxWidth: 14, padding: 16 }
+          },
+          tooltip: {
+            callbacks: {
+              label: ctx => ` ${ctx.dataset.label}：NT$${fmtNum(ctx.raw)}`
+            }
+          }
+        },
+        scales: {
+          y: {
+            type: 'linear', position: 'left',
+            grid: { color: 'rgba(0,0,0,0.05)' },
+            ticks: { font: { family: 'Noto Sans TC', size: 10 }, callback: v => 'NT$' + fmtNum(v) }
+          },
+          y2: {
+            type: 'linear', position: 'right',
+            grid: { drawOnChartArea: false },
+            ticks: { font: { family: 'Noto Sans TC', size: 10 }, callback: v => 'NT$' + fmtNum(v) }
+          },
+          x: {
+            grid: { display: false },
+            ticks: { font: { family: 'Noto Sans TC', size: 10 }, maxRotation: 30 }
+          }
+        }
+      }
+    });
+  }
+
+  /** 渲染解決方案列表 */
+  function renderCashFlowSolutions(level) {
+    const solutions = getCashFlowSolutions(level);
+    const container = document.getElementById('cf-solutions-list');
+    const titleEl   = document.getElementById('cf-solution-title');
+
+    if (level === 'red')    titleEl.textContent = '🚨 緊急財務行動方案';
+    else if (level === 'yellow') titleEl.textContent = '⚠️ 現金流改善建議';
+    else if (level === 'nodata') titleEl.textContent = '💡 財務顧問行動建議';
+    else titleEl.textContent = '💡 財務優化建議';
+
+    container.innerHTML = solutions.map(s => `
+      <div class="cf-solution-item ${s.type}">
+        <div class="cf-sol-title">${s.title}</div>
+        <p>${s.text}</p>
+      </div>
+    `).join('');
+  }
+
+</script>
+</body>
+</html>
