@@ -2374,9 +2374,37 @@
     const e = expenses.find(ex => ex.id === id);
     if (!e) return;
 
+    // 根據目前模式動態產生正確的類別選項
+    const catSel = document.getElementById('edit-category');
+    if (currentMode === 'company') {
+      catSel.innerHTML = `
+        <option value="薪資費用">👥 薪資費用</option>
+        <option value="租金">🏠 租金</option>
+        <option value="水電費">💡 水電費</option>
+        <option value="行銷費用">📢 行銷費用</option>
+        <option value="原料進貨">📦 原料進貨</option>
+        <option value="設備折舊">🔧 設備折舊</option>
+        <option value="雜費">📋 雜費</option>
+        <option value="其他">➕ 其他</option>
+      `;
+    } else {
+      catSel.innerHTML = `
+        <option value="餐飲">🍜 餐飲</option>
+        <option value="交通">🚌 交通</option>
+        <option value="娛樂">🎮 娛樂</option>
+        <option value="購物">🛍️ 購物</option>
+        <option value="醫療">🏥 醫療</option>
+        <option value="保險">🛡️ 保險</option>
+        <option value="水電瓦斯">💡 水電瓦斯</option>
+        <option value="投資">📊 投資</option>
+        <option value="固定支出">📌 固定支出</option>
+        <option value="其他">📦 其他</option>
+      `;
+    }
+
     document.getElementById('edit-expense-id').value = id;
     document.getElementById('edit-date').value        = e.date || '';
-    document.getElementById('edit-category').value    = e.category || '餐飲';
+    catSel.value                                      = e.category || (currentMode === 'company' ? '薪資費用' : '餐飲');
     document.getElementById('edit-name').value        = e.name || '';
     document.getElementById('edit-amount').value      = e.amount || '';
     document.getElementById('edit-note').value        = e.note || '';
