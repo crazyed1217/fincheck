@@ -400,8 +400,8 @@
       to { opacity: 1; transform: translateY(0); }
     }
 
-    .tab-panel { display: none; padding: 36px 0 60px; }
-    .tab-panel.active { display: block; }
+    .tab-panel { display: none !important; padding: 36px 0 60px; }
+    .tab-panel.active { display: block !important; }
 
     .tab-usage-bar {
       background: linear-gradient(135deg, rgba(26,58,92,0.06), rgba(26,58,92,0.04));
@@ -1588,7 +1588,7 @@
     <!-- ============================================================
          TAB 6 — 💸 現金流預測與預警
          ============================================================ -->
-    <div class="tab-panel tab-content" id="tab-cashflow">
+    <div class="tab-panel tab-content" id="tab-cashflow" style="display:none;">
       <div class="container">
 
         <div class="tab-usage-bar">
@@ -2121,6 +2121,7 @@
       btn.classList.add('active');
       tabPanels.forEach(panel => {
         if (panel.id === targetId) {
+          panel.style.display = ''; // 清除 inline style，讓 CSS class 接管
           panel.classList.add('active');
           panel.style.animation = 'none';
           panel.offsetHeight;
@@ -2269,6 +2270,10 @@
     const balance = totalIncome - totalExpense;
     const saveRate = totalIncome > 0 ? ((balance / totalIncome) * 100).toFixed(1) + '%' : '—';
 
+    // 在函式頂層宣告，讓圖表區塊也能使用
+    const colors = getCategoryColors();
+    const emojis = getCatEmoji();
+
     // KPI tiles
     document.getElementById('kpi-income').textContent = fmt(totalIncome);
     document.getElementById('kpi-expense').textContent = fmt(totalExpense);
@@ -2286,8 +2291,6 @@
       tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="empty-state-icon">📭</div>本月尚無支出記錄</div></td></tr>`;
     } else {
       tbody.innerHTML = sorted.map(e => {
-        const colors = getCategoryColors();
-        const emojis = getCatEmoji();
         const color = colors[e.category] || '#95a5a6';
         const emoji = emojis[e.category] || '📦';
         return `<tr>
