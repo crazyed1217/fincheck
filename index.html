@@ -2107,6 +2107,7 @@
     } else {
       document.getElementById('mode-select-screen').classList.add('hidden');
       applyMode(currentMode);
+      updateCategoryOptions(); // 確保下拉類別符合目前模式
     }
   });
 
@@ -2261,6 +2262,7 @@
   }
 
   function refreshExpensesTab() {
+    updateCategoryOptions(); // 每次刷新時同步類別選單
     const expenses = AppData.getExpenses(expYear, expMonth);
     const totalExpense = expenses.reduce((s, e) => s + e.amount, 0);
     const totalIncome = AppData.getMonthTotalIncome(expYear, expMonth);
