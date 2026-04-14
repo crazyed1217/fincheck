@@ -907,6 +907,76 @@
     }
     .cf-assumptions-title { font-weight: 700; color: var(--primary); margin-bottom: 6px; }
     .cf-no-data { text-align: center; padding: 40px 24px; color: var(--gray-400); font-size: 0.95rem; }
+
+    /* ===== MULTI-PROFILE SYSTEM ===== */
+    .profile-select-box { max-width: 680px; }
+    .profile-list { display: flex; flex-direction: column; gap: 12px; margin-top: 8px; }
+    .profile-card {
+      display: flex; align-items: center; gap: 16px;
+      background: white; border: 2px solid var(--gray-200); border-radius: 14px;
+      padding: 16px 20px; cursor: pointer; transition: all .2s; text-align: left;
+      width: 100%;
+    }
+    .profile-card:hover { border-color: var(--primary); background: #f0f4f8; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(26,58,92,.15); }
+    .profile-card-icon { font-size: 28px; flex-shrink: 0; }
+    .profile-card-info { flex: 1; min-width: 0; }
+    .profile-card-name { font-size: 16px; font-weight: 800; color: var(--primary); margin-bottom: 3px; }
+    .profile-card-meta { font-size: 12px; color: var(--gray-400); }
+    .profile-card-active { border-color: var(--green) !important; background: #f0fff4; }
+    .profile-delete-btn {
+      background: rgba(231,76,60,.08); color: var(--red); border: 1px solid rgba(231,76,60,.2);
+      border-radius: 8px; padding: 6px 10px; cursor: pointer; font-size: 14px;
+      flex-shrink: 0; transition: all .2s;
+    }
+    .profile-delete-btn:hover { background: var(--red); color: white; }
+    .profile-add-btn {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      width: 100%; padding: 14px; border-radius: 12px;
+      border: 2px dashed var(--gray-200); background: transparent;
+      color: var(--gray-600); font-family: 'Noto Sans TC', sans-serif;
+      font-size: 14px; font-weight: 700; cursor: pointer; transition: all .2s;
+    }
+    .profile-add-btn:hover { border-color: var(--primary); color: var(--primary); background: rgba(26,58,92,.04); }
+
+    /* New Profile Overlay */
+    .new-profile-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,.5); backdrop-filter: blur(4px);
+      z-index: 10000; align-items: center; justify-content: center; padding: 24px;
+    }
+    .new-profile-overlay.active { display: flex; }
+    .new-profile-box {
+      background: white; border-radius: 20px; padding: 36px 32px;
+      max-width: 440px; width: 100%; box-shadow: 0 24px 60px rgba(0,0,0,.3);
+    }
+    .new-profile-title { font-size: 20px; font-weight: 800; color: var(--primary); margin-bottom: 24px; }
+    .np-field { margin-bottom: 18px; }
+    .np-label { display: block; font-size: 13px; font-weight: 700; color: var(--gray-600); margin-bottom: 8px; }
+    .np-input {
+      width: 100%; padding: 10px 14px; border: 1.5px solid var(--gray-200);
+      border-radius: 10px; font-family: 'Noto Sans TC', sans-serif; font-size: 14px;
+      outline: none; transition: border-color .2s;
+    }
+    .np-input:focus { border-color: var(--primary); }
+    .np-type-row { display: flex; gap: 10px; }
+    .np-type-btn {
+      flex: 1; padding: 10px; border-radius: 10px; border: 2px solid var(--gray-200);
+      background: white; font-family: 'Noto Sans TC', sans-serif; font-size: 13px;
+      font-weight: 700; color: var(--gray-600); cursor: pointer; transition: all .2s;
+    }
+    .np-type-btn.active { border-color: var(--primary); background: rgba(26,58,92,.08); color: var(--primary); }
+    .np-actions { display: flex; gap: 10px; margin-top: 24px; }
+    .np-btn-cancel {
+      flex: 1; padding: 11px; border-radius: 10px; border: 1.5px solid var(--gray-200);
+      background: white; font-family: 'Noto Sans TC', sans-serif; font-size: 14px;
+      font-weight: 700; color: var(--gray-600); cursor: pointer;
+    }
+    .np-btn-submit {
+      flex: 2; padding: 11px; border-radius: 10px; border: none;
+      background: var(--primary); color: white; font-family: 'Noto Sans TC', sans-serif;
+      font-size: 14px; font-weight: 700; cursor: pointer; transition: background .2s;
+    }
+    .np-btn-submit:hover { background: var(--primary-light); }
   </style>
 </head>
 <body>
@@ -914,24 +984,41 @@
 
 
 <!-- =========================================
-     MODE SELECTION SCREEN
+     MODE SELECTION SCREEN (Multi-Profile)
      ========================================= -->
 <div id="mode-select-screen" class="mode-select-screen">
-  <div class="mode-select-box">
-    <div class="mode-select-logo">💰 個人財務體檢套組</div>
-    <h2 class="mode-select-title">請選擇體檢模式</h2>
-    <p class="mode-select-sub">兩種模式資料完全獨立，可隨時從頂部切換</p>
-    <div class="mode-select-cards">
-      <button class="mode-card" onclick="selectMode('personal')">
-        <div class="mode-card-icon">👤</div>
-        <div class="mode-card-title">個人財務體檢</div>
-        <div class="mode-card-desc">薪資收入、個人支出、個人資產負債、儲蓄率、緊急預備金等指標</div>
-      </button>
-      <button class="mode-card" onclick="selectMode('company')">
-        <div class="mode-card-icon">🏢</div>
-        <div class="mode-card-title">公司財務體檢</div>
-        <div class="mode-card-desc">營業收入、公司支出、企業資產負債、毛利率、流動比率等指標</div>
-      </button>
+  <div class="mode-select-box profile-select-box">
+    <div class="mode-select-logo">💰 財務體檢軟體</div>
+    <h2 class="mode-select-title">選擇帳本</h2>
+    <p class="mode-select-sub">每個帳本資料完全獨立，支援多個個人或公司帳本</p>
+    <div id="profile-list" class="profile-list">
+      <!-- 動態渲染 -->
+    </div>
+  </div>
+</div>
+
+<!-- 新增帳本 Modal -->
+<div id="new-profile-overlay" class="new-profile-overlay">
+  <div class="new-profile-box">
+    <div class="new-profile-title">➕ 新增帳本</div>
+    <div class="np-field">
+      <label class="np-label">帳本名稱 <span style="color:var(--red)">*</span></label>
+      <input id="np-name" class="np-input" type="text" placeholder="例：個人財務、台灣公司、香港分公司…" maxlength="30" />
+    </div>
+    <div class="np-field">
+      <label class="np-label">使用者名稱（選填）</label>
+      <input id="np-owner" class="np-input" type="text" placeholder="例：Edward、王小明…" maxlength="20" />
+    </div>
+    <div class="np-field">
+      <label class="np-label">帳本類型</label>
+      <div class="np-type-row">
+        <button class="np-type-btn active" data-type="personal" onclick="selectNpType(this)">👤 個人財務</button>
+        <button class="np-type-btn" data-type="company" onclick="selectNpType(this)">🏢 公司財務</button>
+      </div>
+    </div>
+    <div class="np-actions">
+      <button class="np-btn-cancel" onclick="closeNewProfileForm()">取消</button>
+      <button class="np-btn-submit" onclick="submitNewProfile()">✅ 建立帳本</button>
     </div>
   </div>
 </div>
@@ -948,10 +1035,11 @@
         <div class="app-logo">
           <div class="app-logo-icon" id="mode-logo-icon">💰</div>
           <span id="mode-title-label">個人財務體檢</span>
+          <span id="mode-owner-label" style="font-size:0.75rem;color:rgba(255,255,255,0.65);margin-left:6px;font-weight:400;"></span>
         </div>
         <div style="display:flex;align-items:center;gap:12px;">
-          <button class="mode-switch-btn" id="mode-switch-btn" onclick="switchMode()">
-            🔄 切換模式
+          <button class="mode-switch-btn" id="mode-switch-btn" onclick="switchProfile()">
+            📚 切換帳本
           </button>
           <div class="data-tools">
             <button class="data-tool-btn export" onclick="exportData()">📤 匯出</button>
@@ -1893,6 +1981,8 @@
   let currentMode = localStorage.getItem('finHealth_mode') || null;
 
   function getStorageKey() {
+    const pid = getActiveProfileId ? getActiveProfileId() : null;
+    if (pid) return 'finHealth_data_' + pid;
     return currentMode === 'company' ? COMPANY_STORAGE_KEY : PERSONAL_STORAGE_KEY;
   }
 
@@ -2078,6 +2168,11 @@
   }
 
   function switchMode() {
+    switchProfile();
+  }
+
+  // Legacy: Keep this for backward compatibility
+  function switchModeLegacy() {
     const newMode = currentMode === 'company' ? 'personal' : 'company';
     if (!confirm(`確定切換到「${newMode === 'company' ? '公司' : '個人'}財務體檢」模式？\n（資料已自動分開儲存，切換後不會遺失）`)) return;
     selectMode(newMode);
@@ -2102,12 +2197,19 @@
 
   // Show mode selection if not chosen yet
   window.addEventListener('DOMContentLoaded', () => {
-    if (!currentMode) {
+    // 遷移舊版資料
+    migrateOldData();
+    const activeProfile = getActiveProfile ? getActiveProfile() : null;
+    if (!activeProfile) {
+      // 沒有帳本或未選擇，顯示帳本選擇畫面
       document.getElementById('mode-select-screen').classList.remove('hidden');
+      renderProfileList();
     } else {
       document.getElementById('mode-select-screen').classList.add('hidden');
+      currentMode = activeProfile.type;
       applyMode(currentMode);
-      updateCategoryOptions(); // 確保下拉類別符合目前模式
+      applyProfileHeader(activeProfile);
+      updateCategoryOptions();
     }
   });
 
@@ -3675,6 +3777,149 @@
         <p>${s.text}</p>
       </div>
     `).join('');
+  }
+
+  // ============================================================
+  // MULTI-PROFILE MANAGEMENT SYSTEM
+  // ============================================================
+  const PROFILES_KEY = 'finHealth_profiles_v2';
+  const ACTIVE_PROFILE_KEY = 'finHealth_active_v2';
+
+  function genProfileId() {
+    return 'prof_' + Date.now() + '_' + Math.random().toString(36).substr(2,5);
+  }
+  function getProfiles() {
+    try { return JSON.parse(localStorage.getItem(PROFILES_KEY) || '[]'); }
+    catch(e) { return []; }
+  }
+  function saveProfiles(profiles) {
+    localStorage.setItem(PROFILES_KEY, JSON.stringify(profiles));
+  }
+  function getActiveProfileId() {
+    return localStorage.getItem(ACTIVE_PROFILE_KEY) || null;
+  }
+  function getActiveProfile() {
+    const id = getActiveProfileId();
+    return getProfiles().find(p => p.id === id) || null;
+  }
+  function getProfileDataKey(pid) {
+    return 'finHealth_data_' + pid;
+  }
+
+  // 遷移舊版資料到新帳本系統
+  function migrateOldData() {
+    if (getProfiles().length > 0) return; // 已遷移過
+    const newProfiles = [];
+    const today = new Date().toISOString().split('T')[0];
+    const personalRaw = localStorage.getItem('finHealth_personal_v1');
+    if (personalRaw) {
+      const pid = genProfileId();
+      newProfiles.push({ id: pid, name: '個人財務', type: 'personal', owner: '', createdAt: today });
+      localStorage.setItem(getProfileDataKey(pid), personalRaw);
+    }
+    const companyRaw = localStorage.getItem('finHealth_company_v1');
+    if (companyRaw) {
+      const pid = genProfileId();
+      newProfiles.push({ id: pid, name: '公司財務', type: 'company', owner: '', createdAt: today });
+      localStorage.setItem(getProfileDataKey(pid), companyRaw);
+    }
+    if (newProfiles.length > 0) saveProfiles(newProfiles);
+  }
+
+  function createProfile(name, type, owner) {
+    const pid = genProfileId();
+    const today = new Date().toISOString().split('T')[0];
+    const profile = { id: pid, name, type, owner, createdAt: today };
+    const profiles = getProfiles();
+    profiles.push(profile);
+    saveProfiles(profiles);
+    return profile;
+  }
+
+  function confirmDeleteProfile(pid, name) {
+    const profiles = getProfiles();
+    if (profiles.length <= 1) { alert('至少需要保留一個帳本，無法刪除。'); return; }
+    if (!confirm(`確定刪除「${name}」帳本？\n⚠️ 此操作無法復原，所有資料將永久消失。`)) return;
+    const newProfiles = profiles.filter(p => p.id !== pid);
+    saveProfiles(newProfiles);
+    localStorage.removeItem(getProfileDataKey(pid));
+    if (getActiveProfileId() === pid) localStorage.removeItem(ACTIVE_PROFILE_KEY);
+    renderProfileList();
+  }
+
+  function selectProfile(pid) {
+    const profile = getProfiles().find(p => p.id === pid);
+    if (!profile) return;
+    localStorage.setItem(ACTIVE_PROFILE_KEY, pid);
+    currentMode = profile.type;
+    document.getElementById('mode-select-screen').classList.add('hidden');
+    applyMode(currentMode);
+    applyProfileHeader(profile);
+    AppData.load();
+    expTabInited = false; incTabInited = false;
+    balTabInited = false; goalsTabInited = false;
+    updateCategoryOptions();
+    initExpensesTab();
+    initIncomeTab();
+  }
+
+  function applyProfileHeader(profile) {
+    const icon = profile.type === 'company' ? '🏢' : '👤';
+    document.getElementById('mode-logo-icon').textContent = icon;
+    document.getElementById('mode-title-label').textContent = profile.name;
+    const ownerEl = document.getElementById('mode-owner-label');
+    if (ownerEl) ownerEl.textContent = profile.owner ? `(${profile.owner})` : '';
+    document.title = profile.name + ' — 財務體檢';
+  }
+
+  function switchProfile() {
+    document.getElementById('mode-select-screen').classList.remove('hidden');
+    renderProfileList();
+  }
+
+  function renderProfileList() {
+    const profiles = getProfiles();
+    const container = document.getElementById('profile-list');
+    if (!container) return;
+    const activeId = getActiveProfileId();
+    container.innerHTML = profiles.map(p => {
+      const isActive = p.id === activeId;
+      return `<button class="profile-card${isActive ? ' profile-card-active' : ''}" onclick="selectProfile('${p.id}')">
+        <div class="profile-card-icon">${p.type === 'company' ? '🏢' : '👤'}</div>
+        <div class="profile-card-info">
+          <div class="profile-card-name">${p.name}${isActive ? ' <span style="font-size:10px;background:var(--green);color:white;padding:2px 7px;border-radius:10px;font-weight:700;vertical-align:middle;">使用中</span>' : ''}</div>
+          <div class="profile-card-meta">${p.type === 'company' ? '🏢 公司財務體檢' : '👤 個人財務體檢'}${p.owner ? ' · 👤 ' + p.owner : ''} · 📅 ${p.createdAt}</div>
+        </div>
+        <button class="profile-delete-btn" onclick="event.stopPropagation();confirmDeleteProfile('${p.id}','${p.name}')" title="刪除帳本">🗑️</button>
+      </button>`;
+    }).join('') +
+    `<button class="profile-add-btn" onclick="openNewProfileForm()">➕ 新增帳本</button>`;
+  }
+
+  function openNewProfileForm() {
+    document.getElementById('new-profile-overlay').classList.add('active');
+    document.getElementById('np-name').focus();
+  }
+  function closeNewProfileForm() {
+    document.getElementById('new-profile-overlay').classList.remove('active');
+    document.getElementById('np-name').value = '';
+    document.getElementById('np-owner').value = '';
+    document.querySelectorAll('.np-type-btn').forEach((b,i) => b.classList.toggle('active', i===0));
+  }
+  function selectNpType(btn) {
+    document.querySelectorAll('.np-type-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  }
+  function submitNewProfile() {
+    const name = document.getElementById('np-name').value.trim();
+    const owner = document.getElementById('np-owner').value.trim();
+    const typeBtn = document.querySelector('.np-type-btn.active');
+    const type = typeBtn ? typeBtn.dataset.type : 'personal';
+    if (!name) { document.getElementById('np-name').focus(); showToast('⚠️ 請輸入帳本名稱'); return; }
+    const profile = createProfile(name, type, owner);
+    closeNewProfileForm();
+    // 直接進入新帳本
+    selectProfile(profile.id);
   }
 
 </script>
