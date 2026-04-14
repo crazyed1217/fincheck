@@ -2315,7 +2315,6 @@
     expenses.forEach(e => { catMap[e.category] = (catMap[e.category] || 0) + e.amount; });
     const catLabels = Object.keys(catMap);
     const catVals = catLabels.map(k => catMap[k]);
-    const colors = getCategoryColors();
     const catColors = catLabels.map(k => colors[k] || '#ccc');
 
     const pieCtx = document.getElementById('chart-exp-pie').getContext('2d');
